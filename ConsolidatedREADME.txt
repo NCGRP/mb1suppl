@@ -673,7 +673,7 @@ seq 50 1 55 | parallel --env mypp --env pd --env j mypp; #~6.5min
 ssh compute-0-12;
 cd /scratch/reevesp/patellifolia/blastdbflashedreads;
 cat 5*/5*linecount.txt | sort -t' ' -k2,2 -k3,3nr | grep -v '\./xx00 ' > readcounts.txt;
-#plot hit x frequency to identify a reasonable range of read-hits (40-1000), see Excel file plotreadcounts.xlsx
+#plot hit x frequency to identify a reasonable range of read-hits (40-1000), see Excel file plotreadcounts.xlsx a.k.a. Supplemental Figure 1
 cut -d' ' -f3 readcounts.txt | sort | uniq -c | sed 's/^ *//g' | sort -t' ' -k2,2nr | awk -F' ' '{print $2,$1}' | tr " " "\t" > plotrc.txt;
 
 #get gene names where 40-1000 reads were matched

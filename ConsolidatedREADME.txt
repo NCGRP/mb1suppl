@@ -762,61 +762,6 @@ for i in $(seq 53 1 55);
 
 
 
-
-
-
-
-
-### REMOVE BELOW BEFORE UPLOADING ###
-
-###YOU MIGHT STILL NEED IT IF YOU GO ON TO QUANTIFY MAJOR ALLELE DIFFERENCES BETWEEN POOLS AT EACH GENE###
-
-###URHERE use sgrep procedure below, you may not need this in the meta since having those reads
-#might not have anything to do with the manuscript, but perform it anyway so you get the right scoreads.fa
-#file in b100000yescp
-#Use sgrep on sorted FASTA from FRA, *frasorted.fa to extract all reads matching orthologous genes
-cd /scratch/reevesp;
-rsync -aP admin@10.177.9.14:"/share/Public/Data/PatReeves/PatellifoliaIlluminaAnalysis/reeves/FlashedReadArchive/5*/5*fra/5*fraFinal/5*frasorted.fa" .;
-
-cd /scratch/reevesp/patellifolia/blastdbflashedreads;
-wd=$(pwd);
-for i in $(seq 53 1 55);
-  do echo "$i";
-    > /scratch/reevesp/"$i"scoreads.fa;
-    (grep ^rp "$wd"/"$i"/"$i"scogenes/xx* | cut -d' ' -f1 | cut -d: -f2 | sed 's/^/>/' \
-         | parallel  'LC_ALL=C sgrep {} /scratch/reevesp/'"$i"'frasorted.fa | tr " " "\n"') \
-         >> /scratch/reevesp/"$i"scoreads.fa;
-  done;
-
-#how many reads were extracted
-cd /share/space/reevesp/patellifolia/blastdbflashedreads;
-wd=$(pwd);
-echo "pool readsexp readsfound";
-for i in $(seq 50 1 55);
-  do a=$(grep ^rp "$wd"/b100000yescp/"$i"/"$i"scogenes/xx* | wc -l); #number of reads expected from scogenes/xx*
-    b=$(grep ^'>' "$wd"/b100000yescp/"$i"/"$i"scoreads.fa | wc -l); #number of reads found after extracting from *fra.fa
-    echo "$i $a $b";
-  done;
-			pool readsexp readsfound
-			50 261232 261232
-			51 131744 131744
-			52 199342 199342
-			53 1821256 1821256
-			54 1679330 1679330
-			55 1842842 1842842
-
-### REMOVE ABOVE BEFORE UPLOADING ###
-
-
-
-
-
-
-
-
-
-
-
 ### IDENTIFICATION OF SUGAR BEET EL10 GENOME HOMOLOGS IN PATELLIFOLIA ###
 
 #calculate sequence length for nine EL10 v1.0 chromosomes
@@ -3550,6 +3495,120 @@ par(mai=origpar$mai)
 # End Main #
 
 ### END R MicrohaploblockHeatmap.r ###
+
+
+
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR EXON 5 ONLY FOR SUPPLEMENTAL FIGURE ###
+
+### BEGIN R MicrohaploblockHeatmap.r ###
+#install.packages("RColorBrewer")
+
+options(error = recover)
+rm(list=ls()) 
+library("RColorBrewer")
+
+# Functions #
+	opacitybyallelefreq <- function(i,b,g)
+	{
+	  rr=rgb(b[1,i],b[2,i],b[3,i],alpha=g$freq[i]*255,max=255)
+	  return(rr)
+	}
+
+	plotfeatures=function(f,fname,bbegin,eend)
+	{
+	  segments(f[1],eend+1,f[2],eend+1,col="black",lwd=20,lend=1)
+	  segments(f[1],bbegin-1,f[1],eend+1,col="black",lwd=1,lend=1)
+	  segments(f[2],bbegin-1,f[2],eend+1,col="black",lwd=1,lend=1)
+	  text(f[1]+((f[2]-f[1])/2),eend+1,fname,col="white",cex=0.5,font=1)
+	}
+# End Functions #
+
+# Main #
+origpar=par() #gather initial settings
+plottype=1 #1, fill empty space to next mh locus; 2, plot actual end points of mh
+
+genelist=c("Hs4L1")
+for (gene in genelist)
+{
+	print(gene)
+	
+	if (gene=="Hs4L1")
+	{
+		setwd("/Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs4/hapxmHs4L1")
+		pools=c("pat S", "pat T", "pat S", "pro H", "pro T", "web GC") #labels in order 50:55 (Hs4L1)
+		labelpos=50:55
+	} 	
+
+	#import data table
+	infilenames=c("hxmsummaryRinAll.txt","hxmsummaryRinDiff.txt")
+	for (infilename in infilenames)
+	{
+		print(infilename)
+		
+		outfilename=paste(gene,gsub("hxmsummaryRin","",infilename),sep="")
+		outfilename=gsub(".txt",".ex5.pdf",outfilename)
+
+		g <- read.table(infilename, header=TRUE, sep="\t")
+
+		#add a column that defines the start of the next microhaploblock allele for the current one
+		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
+		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
+		shft=c(shft,tail(g$mhend,nd))
+		g$mhnext=shft #add column that will extend the stop point to the beginning of the next locus, for segment length
+
+		#create a list of hex rgb colors with opacity proportional to allele frequency
+		#rcbcolors=col2rgb(brewer.pal(n = 8, name = "Dark2")) #get hex codes for 8 RColorBrewer colors, convert to rgb
+		#rcbcolors=cbind(col2rgb("black"), rcbcolors) #add black in position 1
+		#b=rcbcolors[,g$majallele+1] #get the RColorBrewer Dark2 color for all major alleles, as defined by integer
+		b=col2rgb(g$majallele+1) #color by major allele state, add 1 so that missing data (0) means black (r color value 1)
+								 #this only works until there are more than 7 colors (r has only 8 numerically coded numbers)
+		tpc=c() #initialize a vector to contain opacity adjusted color to plot for allele frequency
+		for (i in 1:nrow(g))
+		{
+		  tpc=c(tpc,opacitybyallelefreq(i,b,g))
+		}
+
+		#add row to table containing opacity adjusted color
+		g$freqcol=tpc
+
+		#plot an empty graph and add appropriately colored and sized line segments
+		par(mai=c(2.25,1.6,0.8,0.4)) #origpar$mai=c(1.0,1.6,0.8,0.4)
+
+		pdf(outfilename, width=7, height=4.35)
+
+#		plot(g$mhstart,g$pop,type="n",yaxt="n",xlim=c(min(g$mhstart),max(g$mhend)),
+#			ylim=c(min(g$pop)-1,max(g$pop)+1), xlab="", ylab="") #set up plot with no points showing
+		plot(g$mhstart,g$pop,type="n",yaxt="n",xlim=c(2700,3000),
+			ylim=c(min(g$pop)-1,max(g$pop)+1), xlab="", ylab="") #set up plot with no points showing
+		axis(2, at=labelpos, labels=pools, las=1) 
+
+		if (plottype==1)
+		{
+			#display segments with augmented ends, to fill empty space to next locus
+			segments(g$mhstart,g$pop,g$mhnext,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
+		} else
+		if (plottype==2)
+		{
+			#display microhaploblock segments with length corresponding to actual end points
+			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
+		}
+
+		#annotate graph with functional regions
+		if (gene=="Hs4L1")
+		{
+			fname="5" #name of feature
+			f=c(2739,2921) #position of feature
+			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
+		}
+		dev.off()
+	} #infilenames
+} #genelist
+	
+par(mai=origpar$mai)
+# End Main #
+
+### END R MicrohaploblockHeatmap.r ###
+
 
 ### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
 ### END HS4 ALLELE MINING

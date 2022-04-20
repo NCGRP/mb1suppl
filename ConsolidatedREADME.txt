@@ -12,13 +12,20 @@ different HPC resources, named 'ceres' and 'blip' so some paths or variables may
 those by name.  Analyses were submitted to the HPC using SLURM, or conducted in interactive
 sessions, often using GNU Parallel.
 
+Major sections of the pipeline are broken out with notation like:
+### GENOME ASSEMBLY ###
+...
+### END GENOME ASSEMBLY ###
+
 The pipeline calls hapx (https://github.com/NCGRP/hapx) and hapxm
 (https://github.com/NCGRP/hapxm) which call bwa-mem and samtools and make extensive use of
 GNU parallel.
 
 
 
+
 ### GENOME ASSEMBLY ###
+
 #Notes on de novo assembly of 6 Patellifolia genomes using Masurca
 
 #De novo genome assembly was performed on a single compute node containing two 10 core
@@ -65,11 +72,13 @@ run_wait () {
 #Run assemble.sh
 ./assemble.sh 2>&1 | tee outputlog.txt; #write stderr and stdout to a log that can be monitored, useful when running in screen
 
+### END GENOME ASSEMBLY ###
 
 
 
 
 ### INDEX GENOME ASSEMBLY ###
+
 #crude genome assemblies, hereafter also referred to as "reference", from masurca were
 #named 5[0-5]Hs1pro1REVdref.fasta for the 6 pools
 for i in {50..55};
@@ -78,11 +87,13 @@ for i in {50..55};
  done;
 seq 50 1 55 | parallel 'bwa index '{}'Hs1pro1REVdref.fasta';
 
+### END INDEX GENOME ASSEMBLY ###
 
 
 
 
 ### TRIM RAW SEQUENCE READS ###
+
 mypp() {
         i=$1;
         echo "$i";
@@ -93,11 +104,13 @@ mypp() {
 export -f mypp;
 seq 50 55 | parallel --env mypp mypp; #use parallel because multithreading doesn't work.
 
+### END TRIM RAW SEQUENCE READS ###
 
 
 
 
 ### MAP READS TO POOL-SPECIFIC REFERENCE ###
+
 #Align reads from each pool to its reference assembly using bwa-mem, and markdups using sambamba
 #This saves all output, intermediate and otherwise, to the local node. Things can get messy if it fails.
 mypp() { 
@@ -124,11 +137,13 @@ cd /share/space/reevesp/patellifolia/data;
 wd=$(pwd); export wd;
 seq 50 1 55 | parallel --sshloginfile ~/machines --env wd --env mypp mypp;
 
+### END MAP READS TO POOL-SPECIFIC REFERENCE ###
 
 
 
 
 ### PHASE READS ###
+
 #The below code can be pasted to a file hapxsubmitter.slm, which is submitted as a slurm job.
 #Because hundreds of thousands of jobs will be submitted by hapxsubmitter.slm (one per
 #contig in the crude reference assembly), much code is devoted to controlling that process, including
@@ -332,13 +347,12 @@ echo '"completing $aa range $k Completed batch job "'${SLURM_JOB_ID} >> '"$jk$ou
 
 #####END SLURM#####
 
+### END PHASE READS ###
 
 
 
 
-### POST RUN VALIDATION ###
-
-## FOR HPC BLIP (HPC CERES BELOW) ##
+### POST RUN VALIDATION FOR HPC BLIP (HPC CERES BELOW) ###
 
 #Consolidate all results for the run in a folder named like 55fra and move to folder
 #/share/space/reevesp/patellifolia/FRAresults.
@@ -443,13 +457,12 @@ cd ../;
 
 tar -zcvf 55fraFinal.tar.gz 55fraFinal; #compresses 77GB final fra to 27GB. raw reads = 30GB
 
+### END POST RUN VALIDATION FOR HPC BLIP (HPC CERES BELOW) ###
 
 
 
 
-### POST RUN VALIDATION ###
-
-## FOR HPC CERES (HPC BLIP ABOVE) ##
+### POST RUN VALIDATION FOR HPC CERES (HPC BLIP ABOVE) ###
 
 #consolidate all results for the run in a folder named like 55fra and move to folder
 #place all combined results files into a folder, later they will all be combined again
@@ -575,6 +588,7 @@ mv runlog*.txt RuntimeFiles;
 mv stderr* RuntimeFiles;
 mv hapxsubmitter"$r".slm RuntimeFiles;
 
+### END POST RUN VALIDATION FOR HPC CERES (HPC BLIP ABOVE) ###
 
 
 
@@ -599,10 +613,13 @@ seq 50 1 55 | parallel 'makeblastdb -in '"$pd"'/{}frablastdb/{}frasorted.fa -par
 
 #backup PRAs onto NAS at /share/Public/Data/PatReeves/PatellifoliaIlluminaAnalysis/reeves/FlashedReadArchive
 
+### END SPECIFICATION AND FINALIZATION OF ARCHIVE ###
+
 
 
 
 ### CALCULATE QUALITY OF PRA ###
+
 #calculate phased read count
 for i in $(seq 50 1 55);
   do echo -n "$i ";
@@ -633,6 +650,8 @@ seq 50 1 55 | parallel --env mypp mypp;
 			53 69199316527
 			54 47342488152
 			55 45140337698
+
+### END CALCULATE QUALITY OF PRA ###
 
 
 
@@ -762,6 +781,8 @@ for i in $(seq 53 1 55);
 			52 1254
 
 #backup b100000yescp folder onto NAS at /share/Public/Data/PatReeves/PatellifoliaIlluminaAnalysis/reeves/FlashedReadArchive
+
+### END IDENTIFICATION OF SUGAR BEET EL10 TRANSCRIPTOME (GENIC) HOMOLOGS IN PATELLIFOLIA ###
 
 
 
@@ -958,6 +979,7 @@ cd /home/pat.reeves/patellifolia/OrthoVariant;
 			54fraorthov_Chr9_Bvulgaris_548_EL10_1.0.fa.txt 52181 14737
 			55fraorthov_Chr9_Bvulgaris_548_EL10_1.0.fa.txt 52181 15115
 
+### END IDENTIFICATION OF SUGAR BEET EL10 GENOME HOMOLOGS IN PATELLIFOLIA ###
 
 
 
@@ -1387,6 +1409,9 @@ ffmpeg \
    -filter_complex "[0:v][1:v][2:v][3:v][4:v][5:v][6:v][7:v][8:v]xstack=inputs=9:layout=0_0|w0_0|w0+w1_0|0_h0|w0_h0|w0+w1_h0|0_h0+h1|w0_h0+h1|w0+w1_h0+h1[v]" \
        -map "[v]" scodepthlogMosaic.mp4;
 
+### END FILTER BLASTN RESULTS TO FIND SINGLE COPY ORTHOLOG GENOMIC REGIONS BETWEEN EL10 AND PATELLIFOLIA ###
+
+
 
 
 ### DETERMINE LOCATIONS OF HS1PRO1 AND HS4 AND BvBTC1 IN EL10 GENOME###
@@ -1459,6 +1484,9 @@ blastn -db /home/pat.reeves/patellifolia/EL10BlastDBs/1kb_Bvulgaris_548_EL10_1.0
 			32619001_Chr2_EL10_PGA_scaffold6                                      231        2e-58 
 			49598001_Chr1_EL10_PGA_scaffold3                                      231        2e-58 
 			49599001_Chr1_EL10_PGA_scaffold3                                      211        3e-52 
+
+### END DETERMINE LOCATIONS OF HS1PRO1 AND HS4 AND BvBTC1 IN EL10 GENOME###
+
 
 
 
@@ -1565,7 +1593,8 @@ sambamba merge -t40 -p "$pd"/bam/Hs1pro1l1.finalaln.merge.bam "$pd"/bam/5[0-5]Hs
 
 
 
-### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES ###
+### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS1PRO1 ###
+
 #rsync results from HPC ceres to HPC blip so you can get access to multi-node gnu parallel
 
 #run a final hapx to count microhaplotypes at each position (takes ~35 minutes)
@@ -1737,7 +1766,8 @@ for i in $l1global;
 echo "$h" > summaryscaled.txt;
 echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}' | tr ' ' '\t' >> summaryscaled.txt;
 
-### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES ###
+### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS1PRO1 ###
+
 
 
 
@@ -1767,12 +1797,13 @@ time for i in $(seq 50 1 55);
             -o hxm"$i"onhxm1 -u /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1/hxm1/mhendsvar.txt \
             -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
   done;
+
 ### END IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
 
 
 
 
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS ###
+### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
 rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
@@ -1829,11 +1860,12 @@ done <<<"$outp1";
 #write out the summary
 echo "$outp2" > hxmsummary.txt;
 
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS ###
+### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
 
 
 
-### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r ###
+
+### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS1PRO1 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
 c=$(cut -d' ' -f2-8 hxmsummary.txt); #get mhstart mhend mhlength seqs majalleles freqs for all mh majalleles
@@ -1868,11 +1900,12 @@ for k in "$c" "$d";
     fi;
   done;
 
-### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r ###
+### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS1PRO1 ###
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
+
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
 
 #rsync everything back to local machine for work in R
 cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs1pro1;
@@ -1992,7 +2025,7 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
+### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
 ### END HS1PRO1 ALLELE MINING ###
 
 
@@ -2135,13 +2168,13 @@ for j in 50BTC1L1.fa 51BTC1L1.fa 52BTC1L1.fa 53BTC1L1.fa 54BTC1L1.fa 55BTC1L1.fa
     done;
 sambamba merge -t40 -p "$pd"/bam/BTC1l1.finalaln.merge.bam "$pd"/bam/5[0-5]BTC1l1.finalaln.bam.TMP;
 
-
 ### END DETERMINE CONTIGS CONTAINING BvBTC1 IN PATELLIFOLIA POOL ASSEMBLIES ###
 
 
 
 
-### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES ###
+### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, BvBTC1 ###
+
 #rsync results from HPC ceres to HPC blip so you can get access to multi-node gnu parallel
 
 #run a final hapx to count microhaplotypes at each position (takes ~4.5 hrs)
@@ -2311,7 +2344,8 @@ for i in $l1global;
 echo "$h" > summaryscaled.txt;
 echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}' | tr ' ' '\t' >> summaryscaled.txt;
 
-### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES ###
+### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, BvBTC1 ###
+
 
 
 
@@ -2346,11 +2380,13 @@ time for i in $(seq 50 1 55);
             -o hxm"$i"onhxm1 -u /share/space/reevesp/patellifolia/AlleleMining/BTC1/hapxmBTC1L1/hxm1/mhendsvar.txt \
             -s <(for i in $(seq 14761 1 27403); do echo 52jcf7180007952581_ref:"$i"-"$i"; done;)
   done;
+
 ### END IDENTIFY MICROHAPLOBLOCKS ACROSS BvBTC1 ###
 
 
 
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS ###
+
+### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/BTC1/hapxmBTC1L1;
 rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
@@ -2406,11 +2442,12 @@ done <<<"$outp1";
 #write out the summary
 echo "$outp2" > hxmsummary.txt;
 
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS ###
+### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1 ###
 
 
 
-### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r ###
+
+### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, BvBTC1 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/BTC1/hapxmBTC1L1;
 c=$(cut -d' ' -f2-8 hxmsummary.txt); #get mhstart mhend mhlength seqs majalleles freqs for all mh majalleles
@@ -2445,11 +2482,12 @@ for k in "$c" "$d";
     fi;
   done;
 
-### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r ###
+### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, BvBTC1 ###
 
 
 
-### CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY ###
+
+### CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, BvBTC1 ###
 
 #myst() calculates basic stats
 myst() {
@@ -2599,11 +2637,12 @@ for i in {50..55};
 			54 n=3220 mean=0.875224 var=0.00526525 sd=0.0725621
 			55 n=3214 mean=0.913399 var=0.00333679 sd=0.057765
 
-### END CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY ###
+### END CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, BvBTC1 ###
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
+
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, BvBTC1 ###
 
 #rsync everything back to local machine for work in R
 cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/BTC1;
@@ -2743,9 +2782,8 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
+### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, BvBTC1 ###
 ### END BVBTC1 ALLELE MINING
-
 
 
 
@@ -2905,11 +2943,13 @@ for j in 50Hs4L1.fa 51Hs4L1.fa 52Hs4L1.fa 53Hs4L1.fa 54Hs4L1.fa 55Hs4L1.fa;
     done;
 sambamba merge -t40 -p "$pd"/bam/Hs4l1.finalaln.merge.bam "$pd"/bam/5[0-5]Hs4l1.finalaln.bam.TMP;
 
-
 ### END DETERMINE CONTIGS CONTAINING HS4 IN PATELLIFOLIA POOL ASSEMBLIES ###
 
 
-### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES ###
+
+
+### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS4 ###
+
 #rsync results from HPC ceres to HPC blip so you can get access to multi-node gnu parallel
 
 #run a final hapx to count microhaplotypes at each position (takes ~25 min)
@@ -3079,7 +3119,8 @@ for i in $l1global;
 echo "$h" > summaryscaled.txt;
 echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}' | tr ' ' '\t' >> summaryscaled.txt;
 
-### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES ###
+### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS4 ###
+
 
 
 
@@ -3114,11 +3155,13 @@ time for i in $(seq 50 1 55);
             -o hxm"$i"onhxm1 -u /share/space/reevesp/patellifolia/AlleleMining/Hs4/hapxmHs4L1/hxm1/mhendsvar.txt \
             -s <(for i in $(seq 1 1 4980); do echo 53jcf7180008836444_ref:"$i"-"$i"; done;)
   done;
+
 ### END IDENTIFY MICROHAPLOBLOCKS ACROSS HS4 ###
 
 
 
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS ###
+
+### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs4/hapxmHs4L1;
 rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
@@ -3174,11 +3217,12 @@ done <<<"$outp1";
 #write out the summary
 echo "$outp2" > hxmsummary.txt;
 
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS ###
+### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4 ###
 
 
 
-### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r ###
+
+### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS4 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs4/hapxmHs4L1;
 c=$(cut -d' ' -f2-8 hxmsummary.txt); #get mhstart mhend mhlength seqs majalleles freqs for all mh majalleles
@@ -3213,11 +3257,12 @@ for k in "$c" "$d";
     fi;
   done;
 
-### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r ###
+### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS4 ###
 
 
 
-### CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY ###
+
+### CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, HS4 ###
 
 #myst() calculates basic stats
 myst() {
@@ -3368,11 +3413,12 @@ for i in {50..55};
 			54 n=754 mean=0.868737 var=0.00964737 sd=0.098221
 			55 n=754 mean=0.937211 var=0.0058436 sd=0.0764434
 
-### END CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY ###
+### END CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, HS4 ###
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
+
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS4 ###
 
 #rsync everything back to local machine for work in R
 cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs4;
@@ -3500,9 +3546,12 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
+### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS4 ###
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR EXON 5 ONLY FOR FIGURE ###
+
+
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE ###
 
 ### BEGIN R MicrohaploblockHeatmap.r ###
 #install.packages("RColorBrewer")
@@ -3614,7 +3663,8 @@ par(mai=origpar$mai)
 ### END R MicrohaploblockHeatmap.r ###
 
 
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES ###
+### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE ###
+
 ### END HS4 ALLELE MINING
 
 

@@ -2,7 +2,9 @@ Consolidated analyses for Patellifolia poolseq study
 
 This document offers details on the analyses conducted, but scripts are not intended to be
 used as is to perform analyses in another system.  System dependencies would necessitate
-many changes to the code here in order to adapt the pipeline.
+many changes to the code here in order to adapt the pipeline.  This is a "lab notebook" 
+made public so that the methods can be scrutinized and the experiment might be re-created
+elsewhere, with some effort.  It is not a software distribution.
 
 In what follows the integers 50-55 are used to represent the Patellifolia pools. 50-52 are
 P. patellaris, 53-54 P. procumbens, 55 P. webbiana. Analyses were conducted on two
@@ -10,7 +12,9 @@ different HPC resources, named 'ceres' and 'blip' so some paths or variables may
 those by name.  Analyses were submitted to the HPC using SLURM, or conducted in interactive
 sessions, often using GNU Parallel.
 
- 
+The pipeline calls hapx (https://github.com/NCGRP/hapx) and hapxm
+(https://github.com/NCGRP/hapxm) which call bwa-mem and samtools and make extensive use of
+GNU parallel.
 
 
 
@@ -593,18 +597,18 @@ for i in 50 51 52 53 54 55;
 pd=$(pwd);
 seq 50 1 55 | parallel 'makeblastdb -in '"$pd"'/{}frablastdb/{}frasorted.fa -parse_seqids -dbtype nucl;'
 
-#backup FRAs onto NAS at /share/Public/Data/PatReeves/PatellifoliaIlluminaAnalysis/reeves/FlashedReadArchive
+#backup PRAs onto NAS at /share/Public/Data/PatReeves/PatellifoliaIlluminaAnalysis/reeves/FlashedReadArchive
 
 
 
 
-### CALCULATE QUALITY OF FRA ###
+### CALCULATE QUALITY OF PRA ###
 #calculate phased read count
 for i in $(seq 50 1 55);
   do echo -n "$i ";
     grep ^'>'rp "$i"frasorted.fa | wc -l;
   done;
-			poolID, number of phased reads in FRA
+			poolID, number of phased reads in PRA
 			50 242901801
 			51 144535771
 			52 184079155
@@ -896,7 +900,7 @@ cd /home/pat.reeves/patellifolia/OrthoVariant;
 (ls *fa.txt | parallel 'echo "{} "$(grep Query {} | wc -l)" "$(grep "No hits" {} | wc -l)') | sort -t_ -k2,2;
 
 			All queries successful, note fairly substantial proportion (~25%) of queries
-			are not alignable to any phased reads or pool assembly contigs present in the FRA.
+			are not alignable to any phased reads or pool assembly contigs present in the PRA.
 
 			pool_chromosome, queries conducted, queries with no hits
 			50fraorthov_Chr1_Bvulgaris_548_EL10_1.0.fa.txt 58087 14283
@@ -1508,7 +1512,7 @@ for i in $(seq 50 1 55);
 			
 #After identifying which contigs contain Hs1pro1 locus 1 in each pool assembly, and the
 #coordinates within those contigs that contain the Hs1pro1L1 gene, extract the phased reads
-#that map to that region from the FRA map. Just use samtools for this since the reads are
+#that map to that region from the PRA map. Just use samtools for this since the reads are
 #already phased and quality filtered by virtue of being in the map		
 			
 cd /home/pat.reeves/patellifolia/AlleleMining/Hs1pro1;
@@ -2064,7 +2068,7 @@ mv 5[0-5]jcf*.fa /home/pat.reeves/patellifolia/AlleleMining/BTC1;
 						
 #After identifying which contigs contain BTC1 locus 1 in each pool assembly, and the
 #coordinates within those contigs that contain the BTC1 gene, extract the phased reads
-#that map to that region from the FRA map. Just use samtools for this since the reads are
+#that map to that region from the PRA map. Just use samtools for this since the reads are
 #already phased and quality filtered by virtue of being in the map
 			
 cd /home/pat.reeves/patellifolia/AlleleMining/BTC1;
@@ -2794,7 +2798,7 @@ for i in $(seq 50 1 55);
 
 			        *use these for manual alignments and inspection using sequencher
 
-#extract candidate contigs above from FRA for manual inspection
+#extract candidate contigs above from PRA for manual inspection
 cd /home/pat.reeves/patellifolia/FlashedReadArchive;
 sgrep '>jcf7180008065999_1_' 50fraFinal/50frasorted.fa | tr ' ' '\n' > 50jcf7180008065999.fa;
 sgrep '>jcf7180008054617_1_' 50fraFinal/50frasorted.fa | tr ' ' '\n' > 50jcf7180008054617.fa;
@@ -2836,7 +2840,7 @@ mv *mapxHS4.txt  /home/pat.reeves/patellifolia/AlleleMining/Hs4;
 
 #After identifying which contigs contain Hs4 locus 1 in each pool assembly, and the
 #coordinates within those contigs that contain the Hs4 gene, extract the phased reads
-#that map to that region from the FRA map. Just use samtools for this since the reads are
+#that map to that region from the PRA map. Just use samtools for this since the reads are
 #already phased and quality filtered by virtue of being in the map
 			
 cd /home/pat.reeves/patellifolia/AlleleMining/Hs4;
@@ -3498,7 +3502,7 @@ par(mai=origpar$mai)
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR EXON 5 ONLY FOR SUPPLEMENTAL FIGURE ###
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR EXON 5 ONLY FOR FIGURE ###
 
 ### BEGIN R MicrohaploblockHeatmap.r ###
 #install.packages("RColorBrewer")
@@ -3540,7 +3544,7 @@ for (gene in genelist)
 	} 	
 
 	#import data table
-	infilenames=c("hxmsummaryRinAll.txt","hxmsummaryRinDiff.txt")
+	infilenames=c("hxmsummaryRinDiff.txt","hxmsummaryRinAll.txt")
 	for (infilename in infilenames)
 	{
 		print(infilename)

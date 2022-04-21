@@ -1414,7 +1414,7 @@ ffmpeg \
 
 
 
-### DETERMINE LOCATIONS OF HS1PRO1 AND HS4 AND BvBTC1 IN EL10 GENOME###
+### DETERMINE LOCATIONS OF BvBTC1, HS4, AND HS1PRO1 IN EL10 GENOME###
 
 module load blast+/2.9.0;
 
@@ -1485,548 +1485,7 @@ blastn -db /home/pat.reeves/patellifolia/EL10BlastDBs/1kb_Bvulgaris_548_EL10_1.0
 			49598001_Chr1_EL10_PGA_scaffold3                                      231        2e-58 
 			49599001_Chr1_EL10_PGA_scaffold3                                      211        3e-52 
 
-### END DETERMINE LOCATIONS OF HS1PRO1 AND HS4 AND BvBTC1 IN EL10 GENOME###
-
-
-
-
-### HS1PRO1 ALLELE MINING ###
-### DETERMINE CONTIGS CONTAINING HS1PRO1 IN PATELLIFOLIA POOL ASSEMBLIES ###
-
-module load blast+/2.9.0;
-
-cd /home/pat.reeves/patellifolia/FlashedReadArchive;
-
-#Hs1pro1
-for i in $(seq 50 1 55);
-  do blastn -db /home/pat.reeves/patellifolia/FlashedReadArchive/"$i"fraFinal/"$i"Hs1pro1REVdref.fasta -query /home/pat.reeves/patellifolia/seq/Hs1pro-1.fa -out "$i"mapxHs1pro1.txt;
-  done;
-
-#consolidated output from blast
-#all searches above return 1 hit in procumbens/webbiana, two hits in all three patellaris because it is tetraploid
-			Query= U79733.1 Beta procumbens nematode resistance (Hs1pro-1) mRNA,
-			complete cds
-			Length=1450
-																				  Score        E
-			Sequences producing significant alignments:                          (Bits)     Value
-			50jcf7180007932120rev                                                 2451       0.0  
-			50jcf7180007994428rev                                                 2039       0.0  
-			51jcf7180007742276                                                    2451       0.0  
-			51jcf7180007654607                                                    2045       0.0  
-			52jcf7180008015606rev                                                 2423       0.0  
-			52jcf7180007917886                                                    2045       0.0  
-			53jcf7180008859096rev                                                 2495       0.0  
-			54jcf7180009178902rev                                                 2446       0.0  
-			55jcf7180008573862rev                                                 2446       0.0  
-
-
-#Manual inspection of aligned sequences using sequencher showed shared indels can be used to
-#distinguish orthologs.
-#Within tetraploid patellaris one of the two sequences returned by blast is orthologous to
-#the single sequence found in procumbens/webbiana
-
-			Hs1pro1 locus 1 orthologs, and spans containing the Hs1pro1L1 gene are:
-			50jcf7180007932120rev_1493-5327
-			51jcf7180007742276_10788-14621
-			52jcf7180008015606rev_7103-10936
-			53jcf7180008859096rev_1407-5320
-			54jcf7180009178902rev_15333-19226
-			55jcf7180008573862rev_2380-6224
-
-			Hs1pro1 locus 2 orthologs, and spans containing Hs1pro1L2 gene (not used here) are:
-			50jcf7180007994428rev_6873-10755
-			51jcf7180007654607_6772-10654
-			52jcf7180007917886_1297-5179
-			
-#After identifying which contigs contain Hs1pro1 locus 1 in each pool assembly, and the
-#coordinates within those contigs that contain the Hs1pro1L1 gene, extract the phased reads
-#that map to that region from the PRA map. Just use samtools for this since the reads are
-#already phased and quality filtered by virtue of being in the map		
-			
-cd /home/pat.reeves/patellifolia/AlleleMining/Hs1pro1;
-samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/50fraFinal/50fra.bam "50jcf7180007932120rev:1493-5327" > 50Hs1pro1L1.bam 
-samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/51fraFinal/51fra.bam "51jcf7180007742276:10788-14621" > 51Hs1pro1L1.bam 
-samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/52fraFinal/52fra.bam "52jcf7180008015606rev:7103-10936" > 52Hs1pro1L1.bam 
-samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/53fraFinal/53fra.bam "53jcf7180008859096rev:1407-5320" > 53Hs1pro1L1.bam 
-samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/54fraFinal/54fra.bam "54jcf7180009178902rev:15333-19226" > 54Hs1pro1L1.bam 
-samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/55fraFinal/55fra.bam "55jcf7180008573862rev:2380-6224" > 55Hs1pro1L1.bam 
-
-#extract phased reads from bam files into a single fasta file
-seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs1pro1L1.bam > {}Hs1pro1L1.fa';
-			50
-			[M::bam2fq_mainloop] discarded 0 singletons
-			[M::bam2fq_mainloop] processed 822 reads
-			51
-			[M::bam2fq_mainloop] discarded 0 singletons
-			[M::bam2fq_mainloop] processed 425 reads
-			52
-			[M::bam2fq_mainloop] discarded 0 singletons
-			[M::bam2fq_mainloop] processed 645 reads
-			53
-			[M::bam2fq_mainloop] discarded 0 singletons
-			[M::bam2fq_mainloop] processed 1345 reads
-			54
-			[M::bam2fq_mainloop] discarded 0 singletons
-			[M::bam2fq_mainloop] processed 914 reads
-			55
-			[M::bam2fq_mainloop] discarded 0 singletons
-			[M::bam2fq_mainloop] processed 1119 reads
-			
-#map these phased reads to a single reference gene sequence (choose the longest one)
-#for Hs1pro1L1 use 51jcf7180007742276_ref.txt, indexed with bwa index
-cd /home/pat.reeves/patellifolia/AlleleMining/Hs1pro1;
-mkdir bam;
-pd=$(pwd);
-t=40; #threads
-for j in 50Hs1pro1L1.fa 51Hs1pro1L1.fa 52Hs1pro1L1.fa 53Hs1pro1L1.fa 54Hs1pro1L1.fa 55Hs1pro1L1.fa;
-    do rg=$(cut -c1-2 <<<"$j"); #get the read group name 5[0-5]
-      echo "$rg";
-      readgroup="@RG\tID:$rg\tSM:$rg\tPL:illumina\tLB:na\tPU:na";
-      bwa mem -R "$readgroup" -t "$t" "$pd"/ref/51jcf7180007742276_ref.txt "$pd"/"$j" | \
-                  samtools sort -O BAM --threads "$t" | \
-                  samtools view -F 2048 -O BAM > "$pd"/bam/"$rg"Hs1pro1l1.finalaln.bam.TMP; #-F 2048 excludes supplementary alignments
-                  samtools index "$pd"/bam/"$rg"Hs1pro1l1.finalaln.bam.TMP;
-    done;
-sambamba merge -t40 -p "$pd"/bam/Hs1pro1l1.finalaln.merge.bam "$pd"/bam/5[0-5]Hs1pro1l1.finalaln.bam.TMP;
-
-### END DETERMINE CONTIGS CONTAINING HS1PRO1 IN PATELLIFOLIA POOL ASSEMBLIES ###
-
-
-
-### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS1PRO1 ###
-
-#rsync results from HPC ceres to HPC blip so you can get access to multi-node gnu parallel
-
-#run a final hapx to count microhaplotypes at each position (takes ~35 minutes)
-cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1; #go here just to get the working directory specified
-pd=$(pwd);
-time hapx.sh -r "$pd"/ref/51jcf7180007742276_ref.txt \
-        -b "$pd"/bam/Hs1pro1l1.finalaln.merge.bam \
-        -o Hs1pro1l1Finalhapx \
-        -f 0 -q 1 -x -ssh /home/reevesp/machines \
-        -s <(for i in $(seq 9000 1 16000); do echo 51jcf7180007742276:"$i"-"$i"; done;);
-
-
-#postprocess haploblock counts in log.txt into something plottable
-cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/Hs1pro1l1Finalhapx;
-
-### BEGIN BASH ###
-mytd1() {
-        i=$1; #a position on the reference is incoming
-        a=$(grep "$i"\\."$k" "$pd"/numblocks.txt | cut -d: -f4); #number of unique haploblock read pairs mapped to position i in the readgroup
-        if [[ "$a" == "" ]]; then a="?"; fi; #if no data at position i set number of haploblock read pairs to ?
-        echo "$i"."$k $a"; #report result to parallel statement
-}
-export -f mytd1;
-
-mytd2() {
-        i=$1; #a position on the reference is incoming
-        b=$(grep "$i"\\."$k" "$pd"/numblocks.txt | cut -d$'\t' -f2 | cut -d: -f1); #total number haploblock read pairs mapped to position i in the readgroup
-        if [[ "$b" == "" ]]; then b="?"; fi; #if no data at position i set to ?
-        echo "$i"."$k $b"; #report result to parallel statement
-}
-export -f mytd2;
-
-mypa() {
-       i=$1; #contig:site-range
-       j=$(grep "$i" "$pd"/counts.txt | grep -v global);
-       names=$(cut -d$'\t' -f1 <<<"$j" | sed 's/$/ 0/');
-       counts=$(cut -d$'\t' -f2 <<<"$j");
-       nc=$(head -1 <<<"$counts" | awk -F: '{print NF}'); #number of alleles
-       nr=$(wc -l <<<"$counts"); #number of read groups
-       nz=$(( $nr - 1 )); #number of zeroes needed in a column of allele counts for a private allele to exist
-       for m in $(seq 1 1 $nc);
-         do col=$(cut -d: -f$m <<<"$counts"); #extract the column of allele counts
-           fl=$(grep -n -v 0 <<<"$col"); #show line numbers where alleles are present
-           
-           #if only one line of the column of data has alleles, it is a private allele
-           if [[ $(echo "$fl" | wc -l) == 1 ]];
-           then r=$(cut -d: -f1 <<<"$fl"); #row number of private allele
-             names=$(awk -F' ' -v r=$r '{if (NR==r) $2++; print}' <<<"$names"); #index up by one the row with the private allele
-           fi;
-         done;
-         
-       #report result to parallel statement
-       echo "$names";
-}
-export -f mypa;
-
-mypadpa() {
-          aa=$1;
-          cc=$(grep "$aa.$dd" "$pd"/names.txt);
-          if [[ "$cc" == "" ]];
-          then echo "$aa.$dd ?"; #if readgroup not found print a ?
-          else echo "$cc";
-          fi;
-}
-export -f mypadpa;
-
-
-pd=$(pwd); export pd;
-
-#count total and distinct haploblocks
-grep ^# log.txt | tr '-' '_' > numblocks.txt;
-a=$(rev numblocks.txt | cut -d. -f2- | rev | uniq); #list of contig:site-ranges
-b=$(rev numblocks.txt | cut -d. -f1 | rev | cut -d$'\t' -f1 | sort -u); export b; #determine set of possible read groups
-
-
-#iterate over read groups to count haploblocks
-for j in $b;
-  do k="$j"; export k; #do this so iterator can be sent to nodes using --sshloginfile
-    echo "$j: counting distinct alleles";
-    >"$pd"/"$j".distallel.txt; #initialize output file with a header for count of distinct alleles within populations
-    echo "$a" | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env mytd1 --env pd --env k /home/reevesp/bin/parallel --jobs 96 --env mytd1 --env pd --env k mytd1 >> "$pd"/"$j".distallel.txt;
-    #echo "$a" | parallel --jobs 1 --pipe -N960 --env mytd1 --env pd --env j /home/reevesp/bin/parallel --jobs 96 --env mytd1 --env pd --env j mytd1 >> "$pd"/"$j".distallel.txt;
-    
-    echo "$j: counting all alleles";
-    >"$pd"/"$j".totallel.txt; #initialize output file with a header for count of all alleles within populations
-    echo "$a" | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env mytd2 --env pd --env k /home/reevesp/bin/parallel --jobs 96 --env mytd2 --env pd --env k mytd2 >> "$pd"/"$j".totallel.txt;
-  done;
-
-
-#count private alleles
-grep ^'@' log.txt | tr '-' '_' | cut -d$'\t' -f1,3 | sort -t_ -k2,2n > freqs.txt;
-grep ^'@' log.txt | tr '-' '_' | cut -d$'\t' -f1,2 | sort -t_ -k2,2n > counts.txt;
-
-c=$(rev counts.txt | cut -d. -f2- | rev | uniq); #list of contig:site-ranges
->names.txt;
-echo "$c" | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env pd --env mypa /home/reevesp/bin/parallel --jobs 96 --env pd --env mypa mypa >> names.txt; #counting sub
-
-#pad the file containing counts of private alleles with "?" for contig:site-range_readgroup combinations that weren't found
-for bb in $b;
-do >"$bb".privallel.txt; #create an output file for the readgroup
-  dd="$bb"; export dd; #transfer iterator to variable that can be exported for gnu parallel
-  echo "$a" | sed 's/#/@/g' | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env pd --env dd --env mypadpa \
-                              /home/reevesp/bin/parallel --jobs 96 --env pd --env dd --env mypadpa mypadpa >> "$bb".privallel.txt;
-done;
-
-#sort and tab delimit output
-for i in $b;
-  do sort -t'_' -k1,1 "$i".distallel.txt | sort -t'_' -k2,2n | sed 's/^#//' | sed "1i position $i.distallel" | tr ' ' '\t' > "$i".2.distallel.txt;
-    sort -t'_' -k1,1 "$i".totallel.txt | sort -t'_' -k2,2n | sed 's/^#//' | sed "1i position $i.totallel" | tr ' ' '\t'  > "$i".2.totallel.txt;
-    sort -t'_' -k1,1 "$i".privallel.txt | sort -t'_' -k2,2n | sed 's/^@//' | sed "1i position $i.privallel" | tr ' ' '\t'  > "$i".2.privallel.txt;
-  done;
-#swap back to original filename
-for i in $b; 
-  do mv "$i".2.distallel.txt "$i".distallel.txt;
-    mv "$i".2.totallel.txt "$i".totallel.txt;
-    mv "$i".2.privallel.txt "$i".privallel.txt;
-  done;
-### END BASH ###
-
-
-#consolidate files into 1, this part depends on number of read groups, is not universal
-#you can tailor the columns cut depending on the number of read groups included
-#for <= 6 read groups, it turns out the same
-paste -d$'\t' global.distallel.txt RG_Z_*.distallel.txt global.totallel.txt RG_Z_*.totallel.txt global.privallel.txt RG_Z_*.privallel.txt \
-  | cut -d$'\t' -f1,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 | sed 's/\.global//'> summary.txt;
-
-#Pools differed in total number of reads. Scale proportionally by total read count relative to pool 51,
-#which had the fewest
-			L1
-			pool:cols:scalar
-			50:3,10,17:1.71
-			51:4,11,18:1.00
-			52:5,12,19:1.23
-			53:6,13,20:1.83
-			54:7,14,21:1.18
-			55:8,15,22:1.20
-			L1global
-			2,9,16
-			$3..$8=$2
-			$10..$15=$9
-			$17..$22=$16
-
-cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/Hs1pro1l1Finalhapx;
-
-summ=$(tail -n +2 summary.txt | tr "\t" " "); #acquire summary.txt as a variable
-h=$(head -1 summary.txt);
-#adjust values for each read group using scaling values above
-l1="50:3,10,17:1.71 51:4,11,18:1.00 52:5,12,19:1.23 53:6,13,20:1.83 54:7,14,21:1.18 55:8,15,22:1.20";
-for i in $l1;
-  do echo "$i";
-    c=$(echo "$i" | cut -d: -f2); #columns to scale
-    s=$(echo "$i" | cut -d: -f3); #scalar, divide by this
-    #cycle through list of columns to scale
-    for cc in $(echo "$c" | sed 's/,/ /g');
-      do summ=$(echo "$summ" | awk -F$' ' -v cc=$cc -v s=$s '{$cc=$cc/s; print $0}');
-      done;
-  done;
-
-#adjust the so-called 'global' value, which is just the sum of the read group values
-l1global="2:3:8 9:10:15 16:17:22"; #columns to sum
-for i in $l1global;
-  do s=$(echo "$i" | cut -d: -f1); #column to put sum in
-    st=$(echo "$i" | cut -d: -f2); #first column to sum
-    se=$(echo "$i" | cut -d: -f3); #last column to sum
-    summ=$(echo "$summ" | awk -F' ' -v s=$s -v st=$st -v se=$se '{for(j=st;j<=se;j++)x+=$j;$s=x; print $0; x=0}');
-  done;
-
-#write
-echo "$h" > summaryscaled.txt;
-echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}' | tr ' ' '\t' >> summaryscaled.txt;
-
-### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS1PRO1 ###
-
-
-
-
-### IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
-
-#Use hapxm.sh to find microhaploblocks in the bam files for each EL10 sco output by hapx -mb.
-#By using -db and -va you can produce an
-#optional file, mhendsvar.txt, that contains a variant optimized tiling path across the locus thru the
-#microhaploblocks, which can be used directly as input into -u, to specify the universal microhaploblock set.
-#hapxm option -va calculates a tiling path that collects the most variable (then, for ties, 
-#most depth, then longest) microhaploblocks at each site.
-
-#Hs1pro1l1, ~4 minutes on all nodes
-cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1;
-mkdir hapxmHs1Pro1L1;
-cd hapxmHs1Pro1L1;
-time hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/bam/Hs1pro1l1.finalaln.merge.bam \
-            -ssh /home/reevesp/machines \
-            -o hxm1 -db -va -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
-
-#use hapxm.sh to find microhaploblocks in the finalaln.bam.TMP file from each read group using the universal
-#microhaplotypes discovered above. ~12 minutes on all nodes
-time for i in $(seq 50 1 55);
-  do echo $i;
-    hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/bam/"$i"Hs1pro1l1.finalaln.bam.TMP \
-            -ssh /home/reevesp/machines \
-            -o hxm"$i"onhxm1 -u /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1/hxm1/mhendsvar.txt \
-            -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
-  done;
-
-### END IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
-
-
-
-
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
-
-cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
-rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
-#head=$(head -1 <<<"$rhead");
-rhead=$(tail -n +2 <<<"$rhead");#remove col head from row heads
-
-outmajall="";
-outmajfreq="";
-for i in $(seq 50 1 55);
-  do echo $i;
-    majall=$(grep ^"#" hxm"$i"onhxm1/hapxmlog.txt | tail -n +2 | cut -d' ' -f9 | cut -d: -f1); #extract the allele with highest frequency
-    majfreq=$(grep ^"#" hxm"$i"onhxm1/hapxmlog.txt | tail -n +2 | cut -d' ' -f8 | cut -d: -f1); #extract the frequency of the major allele
-    outmajall=$(paste -d: <(echo "$outmajall") <(echo "$majall"));
-    outmajfreq=$(paste -d: <(echo "$outmajfreq") <(echo "$majfreq"));
-  done;
-outmajall=$(sed 's/^://' <<<"$outmajall"); #remove leading colon
-outmajfreq=$(sed 's/^://' <<<"$outmajfreq"); #remove leading colon
-
-#recode mhblocks from DNA sequence to integers
-set -f; #you have to undo globbing before running this command since some values are solely asterisks
-outrecode="";
-while read l;
-do m=$(echo "$l" | tr ':' '\n' | sed 's/^$/0/' | tr '\n' ':' | sed 's/:$//'); #substitute 0 when no allele was found
-  a=$(echo "$m" | tr ':' '\n' | sort -u | grep -v 0); #list containing DNA sequences of alleles, excluding 0 (missing)
-  j=1; #numeric allele name
-  ll="$m";
-  #if [[ "$a" == "" ]];
-  #then outrecode+="$l"$'\n'; #deal with mhloci with no alleles by placing :::::
-  #else
-    for aa in $a; 
-      do ll=${ll//"$aa"/"$j"}; #built-in bash replace obviates need to escape asterisks using sed
-        j=$(( $j + 1 ));
-      done;
-     outrecode+="$ll"$'\n';
-  #fi;
-done <<<"$outmajall";
-outrecode=$(sed '/^$/d' <<<"$outrecode"); #remove terminal blank line
-set +f; #redo globbing
-
-#assemble output
-outp1=$(paste -d' ' <(echo "$rhead") <(echo "$outmajall") <(echo "$outrecode") <(echo "$outmajfreq")); #add row header to major allele list
-
-#find all mh loci with different major alleles, label those rows with @
-outp2="";
-outp2=$(while read l;
-do a=$(echo "$l" | cut -d' ' -f5 | tr ':' '\n'| sed '/^$/d' | sort | uniq | wc -l);
-  if [[ "$a" > 1 ]];
-  then echo "@$l";
-  else echo "$l"
-  fi;
-done <<<"$outp1";
-);
-
-#write out the summary
-echo "$outp2" > hxmsummary.txt;
-
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
-
-
-
-
-### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS1PRO1 ###
-
-cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
-c=$(cut -d' ' -f2-8 hxmsummary.txt); #get mhstart mhend mhlength seqs majalleles freqs for all mh majalleles
-d=$(grep ^@ hxmsummary.txt | cut -d' ' -f2-8); #get mhstart mhend mhlength seqs majalleles freqs for mh majalleles that differ between pops
-
-for k in "$c" "$d";
-  do hdr="pop mhstart mhend length majallele freq seq";
-    e="";
-    while read l;
-      do sqc=$(echo "$l" | cut -d' ' -f4); #allele sequence column
-        mac=$(echo "$l" | cut -d' ' -f5); #major alleles column
-        frc=$(echo "$l" | cut -d' ' -f6); #frequencies column
-        j=1; #j indexes position in horizontal allele calls and freqs
-        for i in $(seq 50 1 55);
-          do rhead=$(echo -n "$i ";echo "$l" | cut -d' ' -f1-3); #row header labeled by population name
-            sq=$(echo "$sqc" | cut -d: -f$j); #allele sequence for population $i
-            ma=$(echo "$mac" | cut -d: -f$j); #major allele for population $i
-            fr=$(echo "$frc" | cut -d: -f$j); #major allele frequency for population $i
-            e+="$rhead $ma $fr $sq"$'\n';
-    
-            j=$(( $j + 1 ));
-          done;
-      done<<<"$k";
-    e=$(sed '/^$/d' <<<"$e");
-    e="$hdr"$'\n'"$e";
-    
-    
-    if [[ "$k" == "$c" ]];
-    then echo "$e" | tr ' ' '\t' > hxmsummaryRinAll.txt;
-    elif [[ "$k" == "$d" ]]; 
-    then echo "$e" | tr ' ' '\t' > hxmsummaryRinDiff.txt;
-    fi;
-  done;
-
-### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS1PRO1 ###
-
-
-
-
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
-
-#rsync everything back to local machine for work in R
-cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs1pro1;
-
-### BEGIN R MicrohaploblockHeatmap.r ###
-#install.packages("RColorBrewer")
-
-options(error = recover)
-rm(list=ls()) 
-library("RColorBrewer")
-
-# Functions #
-	opacitybyallelefreq <- function(i,b,g)
-	{
-	  rr=rgb(b[1,i],b[2,i],b[3,i],alpha=g$freq[i]*255,max=255)
-	  return(rr)
-	}
-
-	plotfeatures=function(f,fname,bbegin,eend)
-	{
-	  segments(f[1],eend+1,f[2],eend+1,col="black",lwd=20,lend=1)
-	  segments(f[1],bbegin-1,f[1],eend+1,col="black",lwd=1,lend=1)
-	  segments(f[2],bbegin-1,f[2],eend+1,col="black",lwd=1,lend=1)
-	  text(f[1]+((f[2]-f[1])/2),eend+1,fname,col="white",cex=0.5,font=1)
-	}
-# End Functions #
-
-# Main #
-origpar=par() #gather initial settings
-plottype=1 #1, fill empty space to next mh locus; 2, plot actual end points of mh
-
-genelist=c("Hs1pro1L1")
-for (gene in genelist)
-{
-	print(gene)
-	
-	if (gene=="Hs1pro1L1")
-	{
-		setwd("/Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1")
-		pools=c("pat S", "pat T", "pat S", "pro H", "pro T", "web GC") #labels in order 50:55 (Hs1Pro1L1)
-		labelpos=50:55
-	} 	
-
-	#import data table
-	infilenames=c("hxmsummaryRinAll.txt","hxmsummaryRinDiff.txt")
-	for (infilename in infilenames)
-	{
-		print(infilename)
-		
-		outfilename=paste(gene,gsub("hxmsummaryRin","",infilename),sep="")
-		outfilename=gsub(".txt",".pdf",outfilename)
-
-		g <- read.table(infilename, header=TRUE, sep="\t")
-
-		#add a column that defines the start of the next microhaploblock allele for the current one
-		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
-		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
-		shft=c(shft,tail(g$mhend,nd))
-		g$mhnext=shft #add column that will extend the stop point to the beginning of the next locus, for segment length
-
-		#create a list of hex rgb colors with opacity proportional to allele frequency
-		#rcbcolors=col2rgb(brewer.pal(n = 8, name = "Dark2")) #get hex codes for 8 RColorBrewer colors, convert to rgb
-		#rcbcolors=cbind(col2rgb("black"), rcbcolors) #add black in position 1
-		#b=rcbcolors[,g$majallele+1] #get the RColorBrewer Dark2 color for all major alleles, as defined by integer
-		b=col2rgb(g$majallele+1) #color by major allele state, add 1 so that missing data (0) means black (r color value 1)
-								 #this only works until there are more than 7 colors (r has only 8 numerically coded numbers)
-		tpc=c() #initialize a vector to contain opacity adjusted color to plot for allele frequency
-		for (i in 1:nrow(g))
-		{
-		  tpc=c(tpc,opacitybyallelefreq(i,b,g))
-		}
-
-		#add row to table containing opacity adjusted color
-		g$freqcol=tpc
-
-		#plot an empty graph and add appropriately colored and sized line segments
-		par(mai=c(2.25,1.6,0.8,0.4)) #origpar$mai=c(1.0,1.6,0.8,0.4)
-
-		pdf(outfilename, width=7, height=4.35)
-
-		plot(g$mhstart,g$pop,type="n",yaxt="n",xlim=c(min(g$mhstart),max(g$mhend)),
-			ylim=c(min(g$pop)-1,max(g$pop)+1), xlab="", ylab="") #set up plot with no points showing
-		axis(2, at=labelpos, labels=pools, las=1) 
-
-		if (plottype==1)
-		{
-			#display segments with augmented ends, to fill empty space to next locus
-			segments(g$mhstart,g$pop,g$mhnext,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
-		} else
-		if (plottype==2)
-		{
-			#display microhaploblock segments with length corresponding to actual end points
-			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
-		}
-
-		#annotate graph with functional regions
-		if (gene=="Hs1pro1L1")
-		{
-			fname="nematode feeding\nresponse" #name of feature
-			f=c(12349,12951) #position of feature
-			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
-
-			fname="general\nupregulation" #name of feature
-			f=c(11392,11886) #position of feature
-			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
-
-			fname="coding sequence" #name of feature
-			f=c(12980,13828) #position of feature
-			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
-		}
-		dev.off()
-	} #infilenames
-} #genelist
-	
-par(mai=origpar$mai)
-# End Main #
-
-### END R MicrohaploblockHeatmap.r ###
-
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
-### END HS1PRO1 ALLELE MINING ###
+### END DETERMINE LOCATIONS OF BvBTC1, HS4, AND HS1PRO1 IN EL10 GENOME###
 
 
 
@@ -3670,6 +3129,544 @@ par(mai=origpar$mai)
 
 
 
+### HS1PRO1 ALLELE MINING ###
+### DETERMINE CONTIGS CONTAINING HS1PRO1 IN PATELLIFOLIA POOL ASSEMBLIES ###
+#this section was not used in the Molecular Breeding manuscript
+
+module load blast+/2.9.0;
+
+cd /home/pat.reeves/patellifolia/FlashedReadArchive;
+
+#Hs1pro1
+for i in $(seq 50 1 55);
+  do blastn -db /home/pat.reeves/patellifolia/FlashedReadArchive/"$i"fraFinal/"$i"Hs1pro1REVdref.fasta -query /home/pat.reeves/patellifolia/seq/Hs1pro-1.fa -out "$i"mapxHs1pro1.txt;
+  done;
+
+#consolidated output from blast
+#all searches above return 1 hit in procumbens/webbiana, two hits in all three patellaris because it is tetraploid
+			Query= U79733.1 Beta procumbens nematode resistance (Hs1pro-1) mRNA,
+			complete cds
+			Length=1450
+																				  Score        E
+			Sequences producing significant alignments:                          (Bits)     Value
+			50jcf7180007932120rev                                                 2451       0.0  
+			50jcf7180007994428rev                                                 2039       0.0  
+			51jcf7180007742276                                                    2451       0.0  
+			51jcf7180007654607                                                    2045       0.0  
+			52jcf7180008015606rev                                                 2423       0.0  
+			52jcf7180007917886                                                    2045       0.0  
+			53jcf7180008859096rev                                                 2495       0.0  
+			54jcf7180009178902rev                                                 2446       0.0  
+			55jcf7180008573862rev                                                 2446       0.0  
+
+
+#Manual inspection of aligned sequences using sequencher showed shared indels can be used to
+#distinguish orthologs.
+#Within tetraploid patellaris one of the two sequences returned by blast is orthologous to
+#the single sequence found in procumbens/webbiana
+
+			Hs1pro1 locus 1 orthologs, and spans containing the Hs1pro1L1 gene are:
+			50jcf7180007932120rev_1493-5327
+			51jcf7180007742276_10788-14621
+			52jcf7180008015606rev_7103-10936
+			53jcf7180008859096rev_1407-5320
+			54jcf7180009178902rev_15333-19226
+			55jcf7180008573862rev_2380-6224
+
+			Hs1pro1 locus 2 orthologs, and spans containing Hs1pro1L2 gene (not used here) are:
+			50jcf7180007994428rev_6873-10755
+			51jcf7180007654607_6772-10654
+			52jcf7180007917886_1297-5179
+			
+#After identifying which contigs contain Hs1pro1 locus 1 in each pool assembly, and the
+#coordinates within those contigs that contain the Hs1pro1L1 gene, extract the phased reads
+#that map to that region from the PRA map. Just use samtools for this since the reads are
+#already phased and quality filtered by virtue of being in the map		
+			
+cd /home/pat.reeves/patellifolia/AlleleMining/Hs1pro1;
+samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/50fraFinal/50fra.bam "50jcf7180007932120rev:1493-5327" > 50Hs1pro1L1.bam 
+samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/51fraFinal/51fra.bam "51jcf7180007742276:10788-14621" > 51Hs1pro1L1.bam 
+samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/52fraFinal/52fra.bam "52jcf7180008015606rev:7103-10936" > 52Hs1pro1L1.bam 
+samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/53fraFinal/53fra.bam "53jcf7180008859096rev:1407-5320" > 53Hs1pro1L1.bam 
+samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/54fraFinal/54fra.bam "54jcf7180009178902rev:15333-19226" > 54Hs1pro1L1.bam 
+samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/55fraFinal/55fra.bam "55jcf7180008573862rev:2380-6224" > 55Hs1pro1L1.bam 
+
+#extract phased reads from bam files into a single fasta file
+seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs1pro1L1.bam > {}Hs1pro1L1.fa';
+			50
+			[M::bam2fq_mainloop] discarded 0 singletons
+			[M::bam2fq_mainloop] processed 822 reads
+			51
+			[M::bam2fq_mainloop] discarded 0 singletons
+			[M::bam2fq_mainloop] processed 425 reads
+			52
+			[M::bam2fq_mainloop] discarded 0 singletons
+			[M::bam2fq_mainloop] processed 645 reads
+			53
+			[M::bam2fq_mainloop] discarded 0 singletons
+			[M::bam2fq_mainloop] processed 1345 reads
+			54
+			[M::bam2fq_mainloop] discarded 0 singletons
+			[M::bam2fq_mainloop] processed 914 reads
+			55
+			[M::bam2fq_mainloop] discarded 0 singletons
+			[M::bam2fq_mainloop] processed 1119 reads
+			
+#map these phased reads to a single reference gene sequence (choose the longest one)
+#for Hs1pro1L1 use 51jcf7180007742276_ref.txt, indexed with bwa index
+cd /home/pat.reeves/patellifolia/AlleleMining/Hs1pro1;
+mkdir bam;
+pd=$(pwd);
+t=40; #threads
+for j in 50Hs1pro1L1.fa 51Hs1pro1L1.fa 52Hs1pro1L1.fa 53Hs1pro1L1.fa 54Hs1pro1L1.fa 55Hs1pro1L1.fa;
+    do rg=$(cut -c1-2 <<<"$j"); #get the read group name 5[0-5]
+      echo "$rg";
+      readgroup="@RG\tID:$rg\tSM:$rg\tPL:illumina\tLB:na\tPU:na";
+      bwa mem -R "$readgroup" -t "$t" "$pd"/ref/51jcf7180007742276_ref.txt "$pd"/"$j" | \
+                  samtools sort -O BAM --threads "$t" | \
+                  samtools view -F 2048 -O BAM > "$pd"/bam/"$rg"Hs1pro1l1.finalaln.bam.TMP; #-F 2048 excludes supplementary alignments
+                  samtools index "$pd"/bam/"$rg"Hs1pro1l1.finalaln.bam.TMP;
+    done;
+sambamba merge -t40 -p "$pd"/bam/Hs1pro1l1.finalaln.merge.bam "$pd"/bam/5[0-5]Hs1pro1l1.finalaln.bam.TMP;
+
+### END DETERMINE CONTIGS CONTAINING HS1PRO1 IN PATELLIFOLIA POOL ASSEMBLIES ###
+
+
+
+### OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS1PRO1 ###
+
+#rsync results from HPC ceres to HPC blip so you can get access to multi-node gnu parallel
+
+#run a final hapx to count microhaplotypes at each position (takes ~35 minutes)
+cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1; #go here just to get the working directory specified
+pd=$(pwd);
+time hapx.sh -r "$pd"/ref/51jcf7180007742276_ref.txt \
+        -b "$pd"/bam/Hs1pro1l1.finalaln.merge.bam \
+        -o Hs1pro1l1Finalhapx \
+        -f 0 -q 1 -x -ssh /home/reevesp/machines \
+        -s <(for i in $(seq 9000 1 16000); do echo 51jcf7180007742276:"$i"-"$i"; done;);
+
+
+#postprocess haploblock counts in log.txt into something plottable
+cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/Hs1pro1l1Finalhapx;
+
+### BEGIN BASH ###
+mytd1() {
+        i=$1; #a position on the reference is incoming
+        a=$(grep "$i"\\."$k" "$pd"/numblocks.txt | cut -d: -f4); #number of unique haploblock read pairs mapped to position i in the readgroup
+        if [[ "$a" == "" ]]; then a="?"; fi; #if no data at position i set number of haploblock read pairs to ?
+        echo "$i"."$k $a"; #report result to parallel statement
+}
+export -f mytd1;
+
+mytd2() {
+        i=$1; #a position on the reference is incoming
+        b=$(grep "$i"\\."$k" "$pd"/numblocks.txt | cut -d$'\t' -f2 | cut -d: -f1); #total number haploblock read pairs mapped to position i in the readgroup
+        if [[ "$b" == "" ]]; then b="?"; fi; #if no data at position i set to ?
+        echo "$i"."$k $b"; #report result to parallel statement
+}
+export -f mytd2;
+
+mypa() {
+       i=$1; #contig:site-range
+       j=$(grep "$i" "$pd"/counts.txt | grep -v global);
+       names=$(cut -d$'\t' -f1 <<<"$j" | sed 's/$/ 0/');
+       counts=$(cut -d$'\t' -f2 <<<"$j");
+       nc=$(head -1 <<<"$counts" | awk -F: '{print NF}'); #number of alleles
+       nr=$(wc -l <<<"$counts"); #number of read groups
+       nz=$(( $nr - 1 )); #number of zeroes needed in a column of allele counts for a private allele to exist
+       for m in $(seq 1 1 $nc);
+         do col=$(cut -d: -f$m <<<"$counts"); #extract the column of allele counts
+           fl=$(grep -n -v 0 <<<"$col"); #show line numbers where alleles are present
+           
+           #if only one line of the column of data has alleles, it is a private allele
+           if [[ $(echo "$fl" | wc -l) == 1 ]];
+           then r=$(cut -d: -f1 <<<"$fl"); #row number of private allele
+             names=$(awk -F' ' -v r=$r '{if (NR==r) $2++; print}' <<<"$names"); #index up by one the row with the private allele
+           fi;
+         done;
+         
+       #report result to parallel statement
+       echo "$names";
+}
+export -f mypa;
+
+mypadpa() {
+          aa=$1;
+          cc=$(grep "$aa.$dd" "$pd"/names.txt);
+          if [[ "$cc" == "" ]];
+          then echo "$aa.$dd ?"; #if readgroup not found print a ?
+          else echo "$cc";
+          fi;
+}
+export -f mypadpa;
+
+
+pd=$(pwd); export pd;
+
+#count total and distinct haploblocks
+grep ^# log.txt | tr '-' '_' > numblocks.txt;
+a=$(rev numblocks.txt | cut -d. -f2- | rev | uniq); #list of contig:site-ranges
+b=$(rev numblocks.txt | cut -d. -f1 | rev | cut -d$'\t' -f1 | sort -u); export b; #determine set of possible read groups
+
+
+#iterate over read groups to count haploblocks
+for j in $b;
+  do k="$j"; export k; #do this so iterator can be sent to nodes using --sshloginfile
+    echo "$j: counting distinct alleles";
+    >"$pd"/"$j".distallel.txt; #initialize output file with a header for count of distinct alleles within populations
+    echo "$a" | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env mytd1 --env pd --env k /home/reevesp/bin/parallel --jobs 96 --env mytd1 --env pd --env k mytd1 >> "$pd"/"$j".distallel.txt;
+    #echo "$a" | parallel --jobs 1 --pipe -N960 --env mytd1 --env pd --env j /home/reevesp/bin/parallel --jobs 96 --env mytd1 --env pd --env j mytd1 >> "$pd"/"$j".distallel.txt;
+    
+    echo "$j: counting all alleles";
+    >"$pd"/"$j".totallel.txt; #initialize output file with a header for count of all alleles within populations
+    echo "$a" | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env mytd2 --env pd --env k /home/reevesp/bin/parallel --jobs 96 --env mytd2 --env pd --env k mytd2 >> "$pd"/"$j".totallel.txt;
+  done;
+
+
+#count private alleles
+grep ^'@' log.txt | tr '-' '_' | cut -d$'\t' -f1,3 | sort -t_ -k2,2n > freqs.txt;
+grep ^'@' log.txt | tr '-' '_' | cut -d$'\t' -f1,2 | sort -t_ -k2,2n > counts.txt;
+
+c=$(rev counts.txt | cut -d. -f2- | rev | uniq); #list of contig:site-ranges
+>names.txt;
+echo "$c" | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env pd --env mypa /home/reevesp/bin/parallel --jobs 96 --env pd --env mypa mypa >> names.txt; #counting sub
+
+#pad the file containing counts of private alleles with "?" for contig:site-range_readgroup combinations that weren't found
+for bb in $b;
+do >"$bb".privallel.txt; #create an output file for the readgroup
+  dd="$bb"; export dd; #transfer iterator to variable that can be exported for gnu parallel
+  echo "$a" | sed 's/#/@/g' | parallel --sshloginfile ~/machines --jobs 1 --pipe -N960 --env pd --env dd --env mypadpa \
+                              /home/reevesp/bin/parallel --jobs 96 --env pd --env dd --env mypadpa mypadpa >> "$bb".privallel.txt;
+done;
+
+#sort and tab delimit output
+for i in $b;
+  do sort -t'_' -k1,1 "$i".distallel.txt | sort -t'_' -k2,2n | sed 's/^#//' | sed "1i position $i.distallel" | tr ' ' '\t' > "$i".2.distallel.txt;
+    sort -t'_' -k1,1 "$i".totallel.txt | sort -t'_' -k2,2n | sed 's/^#//' | sed "1i position $i.totallel" | tr ' ' '\t'  > "$i".2.totallel.txt;
+    sort -t'_' -k1,1 "$i".privallel.txt | sort -t'_' -k2,2n | sed 's/^@//' | sed "1i position $i.privallel" | tr ' ' '\t'  > "$i".2.privallel.txt;
+  done;
+#swap back to original filename
+for i in $b; 
+  do mv "$i".2.distallel.txt "$i".distallel.txt;
+    mv "$i".2.totallel.txt "$i".totallel.txt;
+    mv "$i".2.privallel.txt "$i".privallel.txt;
+  done;
+### END BASH ###
+
+
+#consolidate files into 1, this part depends on number of read groups, is not universal
+#you can tailor the columns cut depending on the number of read groups included
+#for <= 6 read groups, it turns out the same
+paste -d$'\t' global.distallel.txt RG_Z_*.distallel.txt global.totallel.txt RG_Z_*.totallel.txt global.privallel.txt RG_Z_*.privallel.txt \
+  | cut -d$'\t' -f1,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42 | sed 's/\.global//'> summary.txt;
+
+#Pools differed in total number of reads. Scale proportionally by total read count relative to pool 51,
+#which had the fewest
+			L1
+			pool:cols:scalar
+			50:3,10,17:1.71
+			51:4,11,18:1.00
+			52:5,12,19:1.23
+			53:6,13,20:1.83
+			54:7,14,21:1.18
+			55:8,15,22:1.20
+			L1global
+			2,9,16
+			$3..$8=$2
+			$10..$15=$9
+			$17..$22=$16
+
+cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/Hs1pro1l1Finalhapx;
+
+summ=$(tail -n +2 summary.txt | tr "\t" " "); #acquire summary.txt as a variable
+h=$(head -1 summary.txt);
+#adjust values for each read group using scaling values above
+l1="50:3,10,17:1.71 51:4,11,18:1.00 52:5,12,19:1.23 53:6,13,20:1.83 54:7,14,21:1.18 55:8,15,22:1.20";
+for i in $l1;
+  do echo "$i";
+    c=$(echo "$i" | cut -d: -f2); #columns to scale
+    s=$(echo "$i" | cut -d: -f3); #scalar, divide by this
+    #cycle through list of columns to scale
+    for cc in $(echo "$c" | sed 's/,/ /g');
+      do summ=$(echo "$summ" | awk -F$' ' -v cc=$cc -v s=$s '{$cc=$cc/s; print $0}');
+      done;
+  done;
+
+#adjust the so-called 'global' value, which is just the sum of the read group values
+l1global="2:3:8 9:10:15 16:17:22"; #columns to sum
+for i in $l1global;
+  do s=$(echo "$i" | cut -d: -f1); #column to put sum in
+    st=$(echo "$i" | cut -d: -f2); #first column to sum
+    se=$(echo "$i" | cut -d: -f3); #last column to sum
+    summ=$(echo "$summ" | awk -F' ' -v s=$s -v st=$st -v se=$se '{for(j=st;j<=se;j++)x+=$j;$s=x; print $0; x=0}');
+  done;
+
+#write
+echo "$h" > summaryscaled.txt;
+echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}' | tr ' ' '\t' >> summaryscaled.txt;
+
+### END OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS1PRO1 ###
+
+
+
+
+### IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
+
+#Use hapxm.sh to find microhaploblocks in the bam files for each EL10 sco output by hapx -mb.
+#By using -db and -va you can produce an
+#optional file, mhendsvar.txt, that contains a variant optimized tiling path across the locus thru the
+#microhaploblocks, which can be used directly as input into -u, to specify the universal microhaploblock set.
+#hapxm option -va calculates a tiling path that collects the most variable (then, for ties, 
+#most depth, then longest) microhaploblocks at each site.
+
+#Hs1pro1l1, ~4 minutes on all nodes
+cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1;
+mkdir hapxmHs1Pro1L1;
+cd hapxmHs1Pro1L1;
+time hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/bam/Hs1pro1l1.finalaln.merge.bam \
+            -ssh /home/reevesp/machines \
+            -o hxm1 -db -va -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
+
+#use hapxm.sh to find microhaploblocks in the finalaln.bam.TMP file from each read group using the universal
+#microhaplotypes discovered above. ~12 minutes on all nodes
+time for i in $(seq 50 1 55);
+  do echo $i;
+    hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/bam/"$i"Hs1pro1l1.finalaln.bam.TMP \
+            -ssh /home/reevesp/machines \
+            -o hxm"$i"onhxm1 -u /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1/hxm1/mhendsvar.txt \
+            -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
+  done;
+
+### END IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
+
+
+
+
+### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
+
+cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
+rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
+#head=$(head -1 <<<"$rhead");
+rhead=$(tail -n +2 <<<"$rhead");#remove col head from row heads
+
+outmajall="";
+outmajfreq="";
+for i in $(seq 50 1 55);
+  do echo $i;
+    majall=$(grep ^"#" hxm"$i"onhxm1/hapxmlog.txt | tail -n +2 | cut -d' ' -f9 | cut -d: -f1); #extract the allele with highest frequency
+    majfreq=$(grep ^"#" hxm"$i"onhxm1/hapxmlog.txt | tail -n +2 | cut -d' ' -f8 | cut -d: -f1); #extract the frequency of the major allele
+    outmajall=$(paste -d: <(echo "$outmajall") <(echo "$majall"));
+    outmajfreq=$(paste -d: <(echo "$outmajfreq") <(echo "$majfreq"));
+  done;
+outmajall=$(sed 's/^://' <<<"$outmajall"); #remove leading colon
+outmajfreq=$(sed 's/^://' <<<"$outmajfreq"); #remove leading colon
+
+#recode mhblocks from DNA sequence to integers
+set -f; #you have to undo globbing before running this command since some values are solely asterisks
+outrecode="";
+while read l;
+do m=$(echo "$l" | tr ':' '\n' | sed 's/^$/0/' | tr '\n' ':' | sed 's/:$//'); #substitute 0 when no allele was found
+  a=$(echo "$m" | tr ':' '\n' | sort -u | grep -v 0); #list containing DNA sequences of alleles, excluding 0 (missing)
+  j=1; #numeric allele name
+  ll="$m";
+  #if [[ "$a" == "" ]];
+  #then outrecode+="$l"$'\n'; #deal with mhloci with no alleles by placing :::::
+  #else
+    for aa in $a; 
+      do ll=${ll//"$aa"/"$j"}; #built-in bash replace obviates need to escape asterisks using sed
+        j=$(( $j + 1 ));
+      done;
+     outrecode+="$ll"$'\n';
+  #fi;
+done <<<"$outmajall";
+outrecode=$(sed '/^$/d' <<<"$outrecode"); #remove terminal blank line
+set +f; #redo globbing
+
+#assemble output
+outp1=$(paste -d' ' <(echo "$rhead") <(echo "$outmajall") <(echo "$outrecode") <(echo "$outmajfreq")); #add row header to major allele list
+
+#find all mh loci with different major alleles, label those rows with @
+outp2="";
+outp2=$(while read l;
+do a=$(echo "$l" | cut -d' ' -f5 | tr ':' '\n'| sed '/^$/d' | sort | uniq | wc -l);
+  if [[ "$a" > 1 ]];
+  then echo "@$l";
+  else echo "$l"
+  fi;
+done <<<"$outp1";
+);
+
+#write out the summary
+echo "$outp2" > hxmsummary.txt;
+
+### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
+
+
+
+
+### CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS1PRO1 ###
+
+cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
+c=$(cut -d' ' -f2-8 hxmsummary.txt); #get mhstart mhend mhlength seqs majalleles freqs for all mh majalleles
+d=$(grep ^@ hxmsummary.txt | cut -d' ' -f2-8); #get mhstart mhend mhlength seqs majalleles freqs for mh majalleles that differ between pops
+
+for k in "$c" "$d";
+  do hdr="pop mhstart mhend length majallele freq seq";
+    e="";
+    while read l;
+      do sqc=$(echo "$l" | cut -d' ' -f4); #allele sequence column
+        mac=$(echo "$l" | cut -d' ' -f5); #major alleles column
+        frc=$(echo "$l" | cut -d' ' -f6); #frequencies column
+        j=1; #j indexes position in horizontal allele calls and freqs
+        for i in $(seq 50 1 55);
+          do rhead=$(echo -n "$i ";echo "$l" | cut -d' ' -f1-3); #row header labeled by population name
+            sq=$(echo "$sqc" | cut -d: -f$j); #allele sequence for population $i
+            ma=$(echo "$mac" | cut -d: -f$j); #major allele for population $i
+            fr=$(echo "$frc" | cut -d: -f$j); #major allele frequency for population $i
+            e+="$rhead $ma $fr $sq"$'\n';
+    
+            j=$(( $j + 1 ));
+          done;
+      done<<<"$k";
+    e=$(sed '/^$/d' <<<"$e");
+    e="$hdr"$'\n'"$e";
+    
+    
+    if [[ "$k" == "$c" ]];
+    then echo "$e" | tr ' ' '\t' > hxmsummaryRinAll.txt;
+    elif [[ "$k" == "$d" ]]; 
+    then echo "$e" | tr ' ' '\t' > hxmsummaryRinDiff.txt;
+    fi;
+  done;
+
+### END CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS1PRO1 ###
+
+
+
+
+### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
+
+#rsync everything back to local machine for work in R
+cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs1pro1;
+
+### BEGIN R MicrohaploblockHeatmap.r ###
+#install.packages("RColorBrewer")
+
+options(error = recover)
+rm(list=ls()) 
+library("RColorBrewer")
+
+# Functions #
+	opacitybyallelefreq <- function(i,b,g)
+	{
+	  rr=rgb(b[1,i],b[2,i],b[3,i],alpha=g$freq[i]*255,max=255)
+	  return(rr)
+	}
+
+	plotfeatures=function(f,fname,bbegin,eend)
+	{
+	  segments(f[1],eend+1,f[2],eend+1,col="black",lwd=20,lend=1)
+	  segments(f[1],bbegin-1,f[1],eend+1,col="black",lwd=1,lend=1)
+	  segments(f[2],bbegin-1,f[2],eend+1,col="black",lwd=1,lend=1)
+	  text(f[1]+((f[2]-f[1])/2),eend+1,fname,col="white",cex=0.5,font=1)
+	}
+# End Functions #
+
+# Main #
+origpar=par() #gather initial settings
+plottype=1 #1, fill empty space to next mh locus; 2, plot actual end points of mh
+
+genelist=c("Hs1pro1L1")
+for (gene in genelist)
+{
+	print(gene)
+	
+	if (gene=="Hs1pro1L1")
+	{
+		setwd("/Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1")
+		pools=c("pat S", "pat T", "pat S", "pro H", "pro T", "web GC") #labels in order 50:55 (Hs1Pro1L1)
+		labelpos=50:55
+	} 	
+
+	#import data table
+	infilenames=c("hxmsummaryRinAll.txt","hxmsummaryRinDiff.txt")
+	for (infilename in infilenames)
+	{
+		print(infilename)
+		
+		outfilename=paste(gene,gsub("hxmsummaryRin","",infilename),sep="")
+		outfilename=gsub(".txt",".pdf",outfilename)
+
+		g <- read.table(infilename, header=TRUE, sep="\t")
+
+		#add a column that defines the start of the next microhaploblock allele for the current one
+		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
+		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
+		shft=c(shft,tail(g$mhend,nd))
+		g$mhnext=shft #add column that will extend the stop point to the beginning of the next locus, for segment length
+
+		#create a list of hex rgb colors with opacity proportional to allele frequency
+		#rcbcolors=col2rgb(brewer.pal(n = 8, name = "Dark2")) #get hex codes for 8 RColorBrewer colors, convert to rgb
+		#rcbcolors=cbind(col2rgb("black"), rcbcolors) #add black in position 1
+		#b=rcbcolors[,g$majallele+1] #get the RColorBrewer Dark2 color for all major alleles, as defined by integer
+		b=col2rgb(g$majallele+1) #color by major allele state, add 1 so that missing data (0) means black (r color value 1)
+								 #this only works until there are more than 7 colors (r has only 8 numerically coded numbers)
+		tpc=c() #initialize a vector to contain opacity adjusted color to plot for allele frequency
+		for (i in 1:nrow(g))
+		{
+		  tpc=c(tpc,opacitybyallelefreq(i,b,g))
+		}
+
+		#add row to table containing opacity adjusted color
+		g$freqcol=tpc
+
+		#plot an empty graph and add appropriately colored and sized line segments
+		par(mai=c(2.25,1.6,0.8,0.4)) #origpar$mai=c(1.0,1.6,0.8,0.4)
+
+		pdf(outfilename, width=7, height=4.35)
+
+		plot(g$mhstart,g$pop,type="n",yaxt="n",xlim=c(min(g$mhstart),max(g$mhend)),
+			ylim=c(min(g$pop)-1,max(g$pop)+1), xlab="", ylab="") #set up plot with no points showing
+		axis(2, at=labelpos, labels=pools, las=1) 
+
+		if (plottype==1)
+		{
+			#display segments with augmented ends, to fill empty space to next locus
+			segments(g$mhstart,g$pop,g$mhnext,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
+		} else
+		if (plottype==2)
+		{
+			#display microhaploblock segments with length corresponding to actual end points
+			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
+		}
+
+		#annotate graph with functional regions
+		if (gene=="Hs1pro1L1")
+		{
+			fname="nematode feeding\nresponse" #name of feature
+			f=c(12349,12951) #position of feature
+			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
+
+			fname="general\nupregulation" #name of feature
+			f=c(11392,11886) #position of feature
+			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
+
+			fname="coding sequence" #name of feature
+			f=c(12980,13828) #position of feature
+			plotfeatures(f,fname,labelpos[1],labelpos[length(labelpos)])
+		}
+		dev.off()
+	} #infilenames
+} #genelist
+	
+par(mai=origpar$mai)
+# End Main #
+
+### END R MicrohaploblockHeatmap.r ###
+
+### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
+### END HS1PRO1 ALLELE MINING ###
 
 
 

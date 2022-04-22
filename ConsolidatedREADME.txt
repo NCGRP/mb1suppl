@@ -595,10 +595,10 @@ mv hapxsubmitter"$r".slm RuntimeFiles;
 
 ### SPECIFICATION AND FINALIZATION OF ARCHIVE ###
 
-#A phased read archive should contain:
+#A pooled read archive should contain:
 #1. reference sequence + index files including bwa index (bwt,amb,ann,pac,sa), samtools faidx (fai)
-#2. merged bam file + index that aligns phased reads to reference
-#3. sorted concatenated fasta file of phased reads that map onto reference
+#2. merged bam file + index that aligns reads to reference
+#3. sorted concatenated fasta file of reads that map onto reference
 #4. blast formatted db (nhr,nin,nog,nsd,nsi,nsq,nal) of (1) and (3)
 
 #Make single line fasta and sort *fra.fa files for use with sgrep downstream (~40 minutes per sort)
@@ -620,12 +620,12 @@ seq 50 1 55 | parallel 'makeblastdb -in '"$pd"'/{}frablastdb/{}frasorted.fa -par
 
 ### CALCULATE QUALITY OF PRA ###
 
-#calculate phased read count
+#calculate read count ("reads" includes phased and unphased)
 for i in $(seq 50 1 55);
   do echo -n "$i ";
     grep ^'>'rp "$i"frasorted.fa | wc -l;
   done;
-			poolID, number of phased reads in PRA
+			poolID, number of reads in PRA
 			50 242901801
 			51 144535771
 			52 184079155
@@ -633,7 +633,7 @@ for i in $(seq 50 1 55);
 			54 173652412
 			55 179541876
 
-#calculate total phased read length
+#calculate total read length
 mypp() {
        i=$1;
        echo -n "$i ";
@@ -643,7 +643,7 @@ export -f mypp;
 
 seq 50 1 55 | parallel --env mypp mypp;
 
-			poolID, cumulative length of phased reads
+			poolID, cumulative length of reads
 			50 66756924241
 			51 39401459615
 			52 50336787189
@@ -661,7 +661,7 @@ seq 50 1 55 | parallel --env mypp mypp;
 #perform blastn search in parallel on blip node compute-0-12 using 24255 EL10 primary transcripts as query with basic blast settings:
 #Bvulgaris_548_EL10_1.0.cds_primaryTranscriptOnly.fa,-num_threads 9 -num_descriptions 100000 -num_alignments 0 (10 hrs for all 6 pools compute-0-12)
 ssh compute-0-12;
-cd /scratch/reevesp/patellifolia/blastdbflashedreads; #starting folder contains blast dbs for phased reads with local path like ./5[0-5]frablastdb/5[0-5]fra.fa as in -db line in blastn command below
+cd /scratch/reevesp/patellifolia/blastdbflashedreads; #starting folder contains blast dbs for reads with local path like ./5[0-5]frablastdb/5[0-5]fra.fa as in -db line in blastn command below
 
 g="Bvulgaris_548_EL10_1.0.cds_primaryTranscriptOnly.fa"; #query file
 pqf="/scratch/reevesp/patellifolia/EL10ref"; #path to folder with query file
@@ -921,7 +921,7 @@ cd /home/pat.reeves/patellifolia/OrthoVariant;
 (ls *fa.txt | parallel 'echo "{} "$(grep Query {} | wc -l)" "$(grep "No hits" {} | wc -l)') | sort -t_ -k2,2;
 
 			All queries successful, note fairly substantial proportion (~25%) of queries
-			are not alignable to any phased reads or pool assembly contigs present in the PRA.
+			are not alignable to any reads or pool assembly contigs present in the PRA.
 
 			pool_chromosome, queries conducted, queries with no hits
 			50fraorthov_Chr1_Bvulgaris_548_EL10_1.0.fa.txt 58087 14283
@@ -1106,7 +1106,7 @@ for i in *scos.txt; do wc -l "$i"; done; #how many scos per pool per chr?
 			5640 52_Chr9_scos.txt
 
 #Make a plottable file showing regions of EL10 with scos in Patellifolia, ~4 min
-#Get a "depth" (phased read count) for each pool, at each 1kb position in EL10 genome. ~3 min
+#Get a "depth" (read count) for each pool, at each 1kb position in EL10 genome. ~3 min
 
 mypp() {
        j=$1; #input file like 5[0-5]fraorthov_Chr[0-9]_Bvulgaris_548_EL10_1.0.fa.txt
@@ -1146,7 +1146,7 @@ time seq 1 1 9 | parallel --env mypp mypp;
 
 
 #on local machine, use R to make an animated bar plot sliding along the chromosome,
-#showing phased read depth on y axis
+#showing read depth on y axis
 cd /Users/wichita/Desktop/telework/patellifolia/OrthoVariantMap/plots/animations;
 
 
@@ -1559,7 +1559,7 @@ mv 5[0-5]jcf*.fa /home/pat.reeves/patellifolia/AlleleMining/BTC1;
 			52jcf7180008029119
 						
 #After identifying which contigs contain BTC1 locus 1 in each pool assembly, and the
-#coordinates within those contigs that contain the BTC1 gene, extract the phased reads
+#coordinates within those contigs that contain the BTC1 gene, extract the reads
 #that map to that region from the PRA map. Just use samtools for this since the reads are
 #already phased and quality filtered by virtue of being in the map
 			
@@ -1571,7 +1571,7 @@ samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/53fraFinal/
 samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/54fraFinal/54fra.bam "jcf7180009178892:5755-17712" > 54BTC1L1.bam; #11958bp
 samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/55fraFinal/55fra.bam "jcf7180008533846:371-12324" > 55BTC1L1.bam; #11954bp
 
-#extract phased reads from bam files into a single fasta file
+#extract reads from bam files into a single fasta file
 seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}BTC1L1.bam > {}BTC1L1.fa';
 
 			50
@@ -1595,7 +1595,7 @@ seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}BTC1L1.bam > {}BT
 			
 
 #manual depth calculation from samtools stats 5[0-5]BTC1l1.finalaln.bam.TMP | grep 'sequences\|length' | grep -v ^#;
-			pool	sequences	longest frag	total length	phased read count	phased read total length	cistron length	avg phased read depth
+			pool	sequences	longest frag	total length	read count	read total length	cistron length	avg read depth
 			50		2535		35291			737948			2534				702657						11972			58.69
 			51		1494		104155			515814			1493				411659						11972			34.39
 			52		2072		32297			606242			2071				573945						11953			48.02
@@ -1604,7 +1604,7 @@ seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}BTC1L1.bam > {}BT
 			55		3609		25414			942496			3608				917082						11954			76.72
 
 
-#map these phased reads to a single reference gene sequence (choose 52jcf7180007952581,
+#map these reads to a single reference gene sequence (choose 52jcf7180007952581,
 #the only one in sense orientation)
 #for BTC1L1 make 52jcf7180007952581_ref.txt from 52jcf7180007952581.fa, indexed with bwa index.
 #you must rename the single reference sequence from "jcf7180007952581_1_32297" because a
@@ -2336,7 +2336,7 @@ mv *mapxHS4.txt  /home/pat.reeves/patellifolia/AlleleMining/Hs4;
 
 
 #After identifying which contigs contain Hs4 locus 1 in each pool assembly, and the
-#coordinates within those contigs that contain the Hs4 gene, extract the phased reads
+#coordinates within those contigs that contain the Hs4 gene, extract the reads
 #that map to that region from the PRA map. Just use samtools for this since the reads are
 #already phased and quality filtered by virtue of being in the map
 			
@@ -2348,7 +2348,7 @@ samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/53fraFinal/
 samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/54fraFinal/54fra.bam "jcf7180009171055:28603-32037" > 54Hs4L1.bam; #3435bp
 samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/55fraFinal/55fra.bam "jcf7180008572969:11767-15062" > 55Hs4L1.bam; #3296bp
 
-#extract phased reads from bam files into a single fasta file
+#extract reads from bam files into a single fasta file
 seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs4L1.bam > {}Hs4L1.fa';
 
 			50
@@ -2371,7 +2371,7 @@ seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs4L1.bam > {}Hs4
 			[M::bam2fq_mainloop] processed 569 reads
 			
 #manual depth calculation from samtools stats 5[0-5]Hs4l1.finalaln.bam.TMP | grep 'sequences\|length' | grep -v ^#;
-			pool	sequences	longest frag	total length	phased read count	phased read total length	cistron length	avg phased read depth
+			pool	sequences	longest frag	total length	read count	read total length	cistron length	avg read depth
 			50		699			24242			218121			698					193879						3429			56.54
 			51		297			7781			89032			296					81251						3427			23.7
 			52		585			23982			186469			584					162487						3429			47.39
@@ -2379,7 +2379,7 @@ seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs4L1.bam > {}Hs4
 			54		813			49556			274714			812					225158						3435			65.55
 			55		569			16110			158293			568					142183						3296			43.14
 
-#map these phased reads to a single reference gene sequence (choose 53jcf7180008836444,
+#map these reads to a single reference gene sequence (choose 53jcf7180008836444,
 #which is in sense orientation and has 900 bp upstream of start codon)
 #for Hs4L1 make 53jcf7180008836444_ref.txt from 53jcf7180008836444.fa, indexed with bwa index.
 #you must rename the single reference sequence from "jcf7180008836444_1_28536" because a
@@ -3179,7 +3179,7 @@ for i in $(seq 50 1 55);
 			52jcf7180007917886_1297-5179
 			
 #After identifying which contigs contain Hs1pro1 locus 1 in each pool assembly, and the
-#coordinates within those contigs that contain the Hs1pro1L1 gene, extract the phased reads
+#coordinates within those contigs that contain the Hs1pro1L1 gene, extract the reads
 #that map to that region from the PRA map. Just use samtools for this since the reads are
 #already phased and quality filtered by virtue of being in the map		
 			
@@ -3191,7 +3191,7 @@ samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/53fraFinal/
 samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/54fraFinal/54fra.bam "54jcf7180009178902rev:15333-19226" > 54Hs1pro1L1.bam 
 samtools view -b -h /home/pat.reeves/patellifolia/FlashedReadArchive/55fraFinal/55fra.bam "55jcf7180008573862rev:2380-6224" > 55Hs1pro1L1.bam 
 
-#extract phased reads from bam files into a single fasta file
+#extract reads from bam files into a single fasta file
 seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs1pro1L1.bam > {}Hs1pro1L1.fa';
 			50
 			[M::bam2fq_mainloop] discarded 0 singletons
@@ -3212,7 +3212,7 @@ seq 50 1 55 | parallel --keep-order 'echo {}; samtools fasta {}Hs1pro1L1.bam > {
 			[M::bam2fq_mainloop] discarded 0 singletons
 			[M::bam2fq_mainloop] processed 1119 reads
 			
-#map these phased reads to a single reference gene sequence (choose the longest one)
+#map these reads to a single reference gene sequence (choose the longest one)
 #for Hs1pro1L1 use 51jcf7180007742276_ref.txt, indexed with bwa index
 cd /home/pat.reeves/patellifolia/AlleleMining/Hs1pro1;
 mkdir bam;

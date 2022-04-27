@@ -12,14 +12,47 @@ different HPC resources, named 'ceres' and 'blip' so some paths or variables may
 those by name.  Analyses were submitted to the HPC using SLURM, or conducted in interactive
 sessions, often using GNU Parallel.
 
+The pipeline calls hapx (https://github.com/NCGRP/hapx) and hapxm
+(https://github.com/NCGRP/hapxm) which call bwa-mem and samtools and make extensive use of
+GNU parallel.
+
 Major sections of the pipeline are broken out with notation like:
 ### GENOME ASSEMBLY ###
 ...
 ### END GENOME ASSEMBLY ###
 
-The pipeline calls hapx (https://github.com/NCGRP/hapx) and hapxm
-(https://github.com/NCGRP/hapxm) which call bwa-mem and samtools and make extensive use of
-GNU parallel.
+Major sections include:
+GENOME ASSEMBLY
+INDEX GENOME ASSEMBLY
+TRIM RAW SEQUENCE READS
+MAP READS TO POOL-SPECIFIC REFERENCE
+PHASE READS
+POST RUN VALIDATION FOR HPC BLIP (HPC CERES BELOW)
+POST RUN VALIDATION FOR HPC CERES (HPC BLIP ABOVE)
+SPECIFICATION AND FINALIZATION OF ARCHIVE
+CALCULATE QUALITY OF PRA
+IDENTIFICATION OF SUGAR BEET EL10 TRANSCRIPTOME (GENIC) HOMOLOGS IN PATELLIFOLIA
+IDENTIFICATION OF SUGAR BEET EL10 GENOME HOMOLOGS IN PATELLIFOLIA
+FILTER BLASTN RESULTS TO FIND SINGLE COPY ORTHOLOG GENOMIC REGIONS BETWEEN EL10 AND PATELLIFOLIA
+DETERMINE LOCATIONS OF BvBTC1, HS4, AND HS1PRO1 IN EL10 GENOME
+BVBTC1 ALLELE MINING
+  DETERMINE CONTIGS CONTAINING BvBTC1 IN PATELLIFOLIA POOL ASSEMBLIES
+  OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, BvBTC1
+  IDENTIFY SHORT HAPLOTYPE LOCI ACROSS BvBTC1
+  FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1
+  CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, BvBTC1
+  CALCULATE DESCRIPTIVE STATISTICS FOR SHORT HAPLOTYPE LOCI IN VARIANT-RICH TILING ARRAY, BvBTC1
+  PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, BvBTC1
+HS4 ALLELE MINING
+  DETERMINE CONTIGS CONTAINING HS4 IN PATELLIFOLIA POOL ASSEMBLIES
+  OPTIONAL: COUNT TOTAL, DISTINCT, AND PRIVATE ALLELES, HS4
+  IDENTIFY SHORT HAPLOTYPE LOCI ACROSS HS4
+  FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4
+  CREATE INPUT FILES FOR R ROUTINE MicrohaploblockHeatmap.r, HS4
+  CALCULATE DESCRIPTIVE STATISTICS FOR SHORT HAPLOTYPE LOCI IN VARIANT-RICH TILING ARRAY, HS4
+  PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, HS4
+  PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE
+
 
 
 
@@ -1414,7 +1447,7 @@ ffmpeg \
 
 
 
-### DETERMINE LOCATIONS OF BvBTC1, HS4, AND HS1PRO1 IN EL10 GENOME###
+### DETERMINE LOCATIONS OF BvBTC1, HS4, AND HS1PRO1 IN EL10 GENOME ###
 
 module load blast+/2.9.0;
 
@@ -1808,14 +1841,14 @@ echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}'
 
 
 
-### IDENTIFY MICROHAPLOBLOCKS ACROSS BvBTC1 ###
+### IDENTIFY SHORT HAPLOTYPE LOCI ACROSS BvBTC1 ###
 
-#Use hapxm.sh to find microhaploblocks in the bam files for each EL10 sco output by hapx -mb.
+#Use hapxm.sh to find short haplotype loci in the bam files for each EL10 sco output by hapx -mb.
 #By using -db and -va you can produce an
 #optional file, mhendsvar.txt, that contains a variant optimized tiling path across the locus thru the
-#microhaploblocks, which can be used directly as input into -u, to specify the universal microhaploblock set.
+#short haplotype loci, which can be used directly as input into -u, to specify the universal short haplotype locus set.
 #hapxm option -va calculates a tiling path that collects the most variable (then, for ties, 
-#most depth, then longest) microhaploblocks at each site.
+#most depth, then longest) short haplotype loci at each site.
 
 #BTC1l1, ~11 minutes on all nodes
 #determine range to consider
@@ -1830,7 +1863,7 @@ time hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/BTC1/bam/BTC1l1.
             -ssh /home/reevesp/machines \
             -o hxm1 -db -va -s <(for i in $(seq 14761 1 27403); do echo 52jcf7180007952581_ref:"$i"-"$i"; done;)
 
-#use hapxm.sh to find microhaploblocks in the finalaln.bam.TMP file from each read group using the universal
+#use hapxm.sh to find short haplotype loci in the finalaln.bam.TMP file from each read group using the universal
 #microhaplotypes discovered above. ~23 minutes on all nodes
 time for i in $(seq 50 1 55);
   do echo $i;
@@ -1840,12 +1873,12 @@ time for i in $(seq 50 1 55);
             -s <(for i in $(seq 14761 1 27403); do echo 52jcf7180007952581_ref:"$i"-"$i"; done;)
   done;
 
-### END IDENTIFY MICROHAPLOBLOCKS ACROSS BvBTC1 ###
+### END IDENTIFY SHORT HAPLOTYPE LOCI ACROSS BvBTC1 ###
 
 
 
 
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1 ###
+### FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/BTC1/hapxmBTC1L1;
 rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
@@ -1901,7 +1934,7 @@ done <<<"$outp1";
 #write out the summary
 echo "$outp2" > hxmsummary.txt;
 
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1 ###
+### END FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, BvBTC1 ###
 
 
 
@@ -1946,7 +1979,7 @@ for k in "$c" "$d";
 
 
 
-### CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, BvBTC1 ###
+### CALCULATE DESCRIPTIVE STATISTICS FOR SHORT HAPLOTYPE LOCI IN VARIANT-RICH TILING ARRAY, BvBTC1 ###
 
 #myst() calculates basic stats
 myst() {
@@ -2096,12 +2129,12 @@ for i in {50..55};
 			54 n=3220 mean=0.875224 var=0.00526525 sd=0.0725621
 			55 n=3214 mean=0.913399 var=0.00333679 sd=0.057765
 
-### END CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, BvBTC1 ###
+### END CALCULATE DESCRIPTIVE STATISTICS FOR SHORT HAPLOTYPE LOCI IN VARIANT-RICH TILING ARRAY, BvBTC1 ###
 
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, BvBTC1 ###
+### PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, BvBTC1 ###
 
 #rsync everything back to local machine for work in R
 cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/BTC1;
@@ -2156,7 +2189,7 @@ for (gene in genelist)
 
 		g <- read.table(infilename, header=TRUE, sep="\t")
 
-		#add a column that defines the start of the next microhaploblock allele for the current one
+		#add a column that defines the start of the next short haplotype locus allele for the current one
 		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
 		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
 		shft=c(shft,tail(g$mhend,nd))
@@ -2193,7 +2226,7 @@ for (gene in genelist)
 		} else
 		if (plottype==2)
 		{
-			#display microhaploblock segments with length corresponding to actual end points
+			#display short haplotype locus segments with length corresponding to actual end points
 			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
 		}
 
@@ -2241,7 +2274,7 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, BvBTC1 ###
+### END PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, BvBTC1 ###
 ### END BVBTC1 ALLELE MINING
 
 
@@ -2583,14 +2616,14 @@ echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}'
 
 
 
-### IDENTIFY MICROHAPLOBLOCKS ACROSS HS4 ###
+### IDENTIFY SHORT HAPLOTYPE LOCI ACROSS HS4 ###
 
-#Use hapxm.sh to find microhaploblocks in the bam files for each EL10 sco output by hapx -mb.
+#Use hapxm.sh to find short haplotype loci in the bam files for each EL10 sco output by hapx -mb.
 #By using -db and -va you can produce an
 #optional file, mhendsvar.txt, that contains a variant optimized tiling path across the locus thru the
-#microhaploblocks, which can be used directly as input into -u, to specify the universal microhaploblock set.
+#short haplotype loci, which can be used directly as input into -u, to specify the universal short haplotype locus set.
 #hapxm option -va calculates a tiling path that collects the most variable (then, for ties, 
-#most depth, then longest) microhaploblocks at each site.
+#most depth, then longest) short haplotype loci at each site.
 
 #Hs4l1, ~4 minutes on all nodes
 #determine range to consider
@@ -2605,7 +2638,7 @@ time hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/Hs4/bam/Hs4l1.fi
             -ssh /home/reevesp/machines \
             -o hxm1 -db -va -s <(for i in $(seq 1 1 4980); do echo 53jcf7180008836444_ref:"$i"-"$i"; done;)
 
-#use hapxm.sh to find microhaploblocks in the finalaln.bam.TMP file from each read group using the universal
+#use hapxm.sh to find short haplotype loci in the finalaln.bam.TMP file from each read group using the universal
 #microhaplotypes discovered above. ~12 minutes on all nodes
 time for i in $(seq 50 1 55);
   do echo $i;
@@ -2615,12 +2648,12 @@ time for i in $(seq 50 1 55);
             -s <(for i in $(seq 1 1 4980); do echo 53jcf7180008836444_ref:"$i"-"$i"; done;)
   done;
 
-### END IDENTIFY MICROHAPLOBLOCKS ACROSS HS4 ###
+### END IDENTIFY SHORT HAPLOTYPE LOCI ACROSS HS4 ###
 
 
 
 
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4 ###
+### FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs4/hapxmHs4L1;
 rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
@@ -2676,7 +2709,7 @@ done <<<"$outp1";
 #write out the summary
 echo "$outp2" > hxmsummary.txt;
 
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4 ###
+### END FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS4 ###
 
 
 
@@ -2721,7 +2754,7 @@ for k in "$c" "$d";
 
 
 
-### CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, HS4 ###
+### CALCULATE DESCRIPTIVE STATISTICS FOR SHORT HAPLOTYPE LOCI IN VARIANT-RICH TILING ARRAY, HS4 ###
 
 #myst() calculates basic stats
 myst() {
@@ -2872,12 +2905,12 @@ for i in {50..55};
 			54 n=754 mean=0.868737 var=0.00964737 sd=0.098221
 			55 n=754 mean=0.937211 var=0.0058436 sd=0.0764434
 
-### END CALCULATE DESCRIPTIVE STATISTICS FOR MICROHAPLOBLOCKS IN VARIANT-RICH TILING ARRAY, HS4 ###
+### END CALCULATE DESCRIPTIVE STATISTICS FOR SHORT HAPLOTYPE LOCI IN VARIANT-RICH TILING ARRAY, HS4 ###
 
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS4 ###
+### PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, HS4 ###
 
 #rsync everything back to local machine for work in R
 cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs4;
@@ -2932,7 +2965,7 @@ for (gene in genelist)
 
 		g <- read.table(infilename, header=TRUE, sep="\t")
 
-		#add a column that defines the start of the next microhaploblock allele for the current one
+		#add a column that defines the start of the next short haplotype locus allele for the current one
 		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
 		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
 		shft=c(shft,tail(g$mhend,nd))
@@ -2969,7 +3002,7 @@ for (gene in genelist)
 		} else
 		if (plottype==2)
 		{
-			#display microhaploblock segments with length corresponding to actual end points
+			#display short haplotype locus segments with length corresponding to actual end points
 			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
 		}
 
@@ -3005,12 +3038,12 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS4 ###
+### END PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, HS4 ###
 
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE ###
+### PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE ###
 
 ### BEGIN R MicrohaploblockHeatmap.r ###
 #install.packages("RColorBrewer")
@@ -3062,7 +3095,7 @@ for (gene in genelist)
 
 		g <- read.table(infilename, header=TRUE, sep="\t")
 
-		#add a column that defines the start of the next microhaploblock allele for the current one
+		#add a column that defines the start of the next short haplotype locus allele for the current one
 		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
 		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
 		shft=c(shft,tail(g$mhend,nd))
@@ -3101,7 +3134,7 @@ for (gene in genelist)
 		} else
 		if (plottype==2)
 		{
-			#display microhaploblock segments with length corresponding to actual end points
+			#display short haplotype locus segments with length corresponding to actual end points
 			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
 		}
 
@@ -3121,9 +3154,7 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
-
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE ###
-
+### END PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES FOR HS4 EXON 5 ONLY FOR FIGURE ###
 ### END HS4 ALLELE MINING
 
 
@@ -3411,14 +3442,14 @@ echo "$summ" | awk -F' ' '{for(i=1; i<=NF; i++) {if($i=="0") $i="?"}; print $0}'
 
 
 
-### IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
+### IDENTIFY SHORT HAPLOTYPE LOCI ACROSS HS1PRO1 ###
 
-#Use hapxm.sh to find microhaploblocks in the bam files for each EL10 sco output by hapx -mb.
+#Use hapxm.sh to find short haplotype loci in the bam files for each EL10 sco output by hapx -mb.
 #By using -db and -va you can produce an
 #optional file, mhendsvar.txt, that contains a variant optimized tiling path across the locus thru the
-#microhaploblocks, which can be used directly as input into -u, to specify the universal microhaploblock set.
+#short haplotype loci, which can be used directly as input into -u, to specify the universal short haplotype locus set.
 #hapxm option -va calculates a tiling path that collects the most variable (then, for ties, 
-#most depth, then longest) microhaploblocks at each site.
+#most depth, then longest) short haplotype loci at each site.
 
 #Hs1pro1l1, ~4 minutes on all nodes
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1;
@@ -3428,7 +3459,7 @@ time hapxm.sh -b /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/bam/Hs1p
             -ssh /home/reevesp/machines \
             -o hxm1 -db -va -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
 
-#use hapxm.sh to find microhaploblocks in the finalaln.bam.TMP file from each read group using the universal
+#use hapxm.sh to find short haplotype loci in the finalaln.bam.TMP file from each read group using the universal
 #microhaplotypes discovered above. ~12 minutes on all nodes
 time for i in $(seq 50 1 55);
   do echo $i;
@@ -3438,12 +3469,12 @@ time for i in $(seq 50 1 55);
             -s <(for i in $(seq 9889 1 15386); do echo 51jcf7180007742276:"$i"-"$i"; done;)
   done;
 
-### END IDENTIFY MICROHAPLOBLOCKS ACROSS HS1PRO1 ###
+### END IDENTIFY SHORT HAPLOTYPE LOCI ACROSS HS1PRO1 ###
 
 
 
 
-### FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
+### FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
 
 cd /share/space/reevesp/patellifolia/AlleleMining/Hs1pro1/hapxmHs1Pro1L1;
 rhead=$(grep ^"#" hxm50onhxm1/hapxmlog.txt | cut -d' ' -f1-4);
@@ -3500,7 +3531,7 @@ done <<<"$outp1";
 #write out the summary
 echo "$outp2" > hxmsummary.txt;
 
-### END FIND MICROHAPLOBLOCKS WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
+### END FIND SHORT HAPLOTYPE LOCI WHERE MAJOR ALLELE DIFFERS BETWEEN POOLS, HS1PRO1 ###
 
 
 
@@ -3545,7 +3576,7 @@ for k in "$c" "$d";
 
 
 
-### PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
+### PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, HS1PRO1 ###
 
 #rsync everything back to local machine for work in R
 cd /Users/wichita/Desktop/telework/patellifolia/AlleleMining/Hs1pro1;
@@ -3600,7 +3631,7 @@ for (gene in genelist)
 
 		g <- read.table(infilename, header=TRUE, sep="\t")
 
-		#add a column that defines the start of the next microhaploblock allele for the current one
+		#add a column that defines the start of the next short haplotype locus allele for the current one
 		nd=length(unique(g$pop)) #number of lines to delete from mhstart to shift it for mhnext
 		shft=g$mhstart[(nd+1):length(g$mhstart)] #remove first nd elements from mhstart
 		shft=c(shft,tail(g$mhend,nd))
@@ -3637,7 +3668,7 @@ for (gene in genelist)
 		} else
 		if (plottype==2)
 		{
-			#display microhaploblock segments with length corresponding to actual end points
+			#display short haplotype locus segments with length corresponding to actual end points
 			segments(g$mhstart,g$pop,g$mhend,g$pop,col=g$freqcol,lwd=30,lend=1) #add colored lines of appropriate length for locus
 		}
 
@@ -3665,7 +3696,7 @@ par(mai=origpar$mai)
 
 ### END R MicrohaploblockHeatmap.r ###
 
-### END PLOT MAJOR ALLELE MICROHAPLOBLOCK DIFFERENCES, HS1PRO1 ###
+### END PLOT MAJOR ALLELE SHORT HAPLOTYPE LOCUS DIFFERENCES, HS1PRO1 ###
 ### END HS1PRO1 ALLELE MINING ###
 
 

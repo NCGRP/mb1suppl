@@ -642,7 +642,7 @@ for i in 50 51 52 53 54 55;
 
 #Make blastdbs for fasta files of flashed reads, takes about 6 hours total
 pd=$(pwd);
-seq 50 1 55 | parallel 'makeblastdb -in '"$pd"'/{}frablastdb/{}frasorted.fa -parse_seqids -dbtype nucl;'
+seq 50 1 55 | parallel 'makeblastdb -in '"$pd"'/{}frablastdb/{}fra.fa -parse_seqids -dbtype nucl;'
 
 #backup PRAs onto NAS at /share/Public/Data/PatReeves/PatellifoliaIlluminaAnalysis/reeves/FlashedReadArchive
 
